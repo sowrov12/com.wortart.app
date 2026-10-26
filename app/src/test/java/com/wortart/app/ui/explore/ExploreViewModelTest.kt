@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -30,9 +32,14 @@ class ExploreViewModelTest {
             list.filter {
                 (filter.level == null || it.level == filter.level) &&
                     (filter.category == null || it.category == filter.category) &&
-                    (filter.topic == null || it.topic == filter.topic)
+                    (filter.topic == null || it.topic == filter.topic) &&
+                    matchesQuery(it, filter.query.trim())
             }
         }
+
+        private fun matchesQuery(card: VocabEntity, query: String): Boolean =
+            query.isEmpty() || listOf(card.word, card.translationEn, card.translationBn)
+                .any { it.contains(query, ignoreCase = true) }
 
         override fun observeFavorites() = all.map { list -> list.filter { it.isFavorite } }
 
@@ -50,26 +57,32 @@ class ExploreViewModelTest {
         override suspend fun getDistractors(card: VocabEntity, count: Int) = emptyList<VocabEntity>()
     }
 
-    private fun word(id: String, topic: String, level: String) = VocabEntity(
+    private fun word(
+        id: String,
+        topic: String,
+        level: String,
+        en: String = "en",
+        bn: String = "bn",
+    ) = VocabEntity(
         id = id,
         word = id,
         category = "regular_verb",
         level = level,
         topic = topic,
-        translationEn = "en",
-        translationBn = "bn",
+        translationEn = en,
+        translationBn = bn,
         exampleDe = "de",
         exampleEn = "en",
         exampleBn = "bn",
         auxiliary = "haben",
     )
 
-    private val gehen = word("gehen", "Movement", "A1")
-    private val kochen = word("kochen", "Food", "A1")
-    private val essen = word("essen", "Food", "A1")
-    private val arbeiten = word("arbeiten", "Career", "B1")
-    private val gesund = word("gesund", "Health", "A2")
-    private val krank = word("krank", "Health", "A2")
+    private val gehen = word("gehen", "Movement", "A1", en = "to go", bn = "যাওয়া")
+    private val kochen = word("kochen", "Food", "A1", en = "to cook", bn = "রান্না করা")
+    private val essen = word("essen", "Food", "A1", en = "to eat", bn = "খাওয়া")
+    private val arbeiten = word("arbeiten", "Career", "B1", en = "to work", bn = "কাজ করা")
+    private val gesund = word("gesund", "Health", "A2", en = "healthy", bn = "সুস্থ")
+    private val krank = word("krank", "Health", "A2", en = "sick", bn = "অসুস্থ")
 
     private val repository = FakeRepository(listOf(gehen, kochen, essen, arbeiten, gesund, krank))
 
@@ -90,6 +103,12 @@ class ExploreViewModelTest {
             viewModel.uiState.collect { }
         }
         this.block(viewModel)
+    }
+
+    /** Lets the search debounce delay pass. */
+    private fun TestScope.letSearchSettle() {
+        advanceTimeBy(ExploreViewModel.SEARCH_DEBOUNCE_MS + 50)
+        runCurrent()
     }
 
     @Test
@@ -171,5 +190,108 @@ class ExploreViewModelTest {
         assertEquals("kochen" to true, repository.lastFavoriteCall)
         val updated = viewModel.uiState.value.words.first { it.id == "kochen" }
         assertTrue(updated.isFavorite)
+    }
+
+    // ---- Search ----
+
+    @Test
+    fun queryTextIsExposedImmediatelyButAppliedAfterTheTypingPause() = runWithViewModel { viewModel ->
+        viewModel.onQueryChange("to ")
+
+        assertEquals("to ", viewModel.query.value)
+        assertEquals("", viewModel.uiState.value.query)
+
+        letSearchSettle()
+        assertEquals("to", viewModel.uiState.value.query)
+        assertTrue(viewModel.uiState.value.isSearching)
+    }
+
+    @Test
+    fun searchFindsWordsInGermanEnglishAndBengali() = runWithViewModel { viewModel ->
+        viewModel.onQueryChange("geh")
+        letSearchSettle()
+        assertEquals(listOf("gehen"), viewModel.uiState.value.words.map { it.id })
+
+        viewModel.onQueryChange("healthy")
+        letSearchSettle()
+        assertEquals(listOf("gesund"), viewModel.uiState.value.words.map { it.id })
+
+        viewModel.onQueryChange("কাজ")
+        letSearchSettle()
+        assertEquals(listOf("arbeiten"), viewModel.uiState.value.words.map { it.id })
+    }
+
+    @Test
+    fun searchSearchesAllTopicsFromTheGrid() = runWithViewModel { viewModel ->
+        viewModel.onQueryChange("to")
+        letSearchSettle()
+
+        val state = viewModel.uiState.value
+        assertEquals(ExploreDestination.Topics, state.destination)
+        assertEquals(listOf("gehen", "kochen", "essen", "arbeiten"), state.words.map { it.id })
+    }
+
+    @Test
+    fun searchRespectsTheLevelFilter() = runWithViewModel { viewModel ->
+        viewModel.selectLevel("A1")
+        viewModel.onQueryChange("to")
+        letSearchSettle()
+
+        assertEquals(listOf("gehen", "kochen", "essen"), viewModel.uiState.value.words.map { it.id })
+    }
+
+    @Test
+    fun searchInsideAnOpenTopicStaysInThatTopic() = runWithViewModel { viewModel ->
+        viewModel.openTopic("Food")
+        viewModel.onQueryChange("to")
+        letSearchSettle()
+
+        assertEquals(listOf("kochen", "essen"), viewModel.uiState.value.words.map { it.id })
+    }
+
+    @Test
+    fun clearingTheQueryIsAppliedAtOnce() = runWithViewModel { viewModel ->
+        viewModel.onQueryChange("to")
+        letSearchSettle()
+        assertTrue(viewModel.uiState.value.isSearching)
+
+        viewModel.clearQuery()
+
+        // No waiting: the result list disappears immediately.
+        assertEquals("", viewModel.query.value)
+        assertEquals("", viewModel.uiState.value.query)
+        assertTrue(viewModel.uiState.value.words.isEmpty())
+    }
+
+    @Test
+    fun fastTypingOnlyAppliesTheLastText() = runWithViewModel { viewModel ->
+        viewModel.onQueryChange("t")
+        advanceTimeBy(50)
+        viewModel.onQueryChange("to c")
+        advanceTimeBy(50)
+
+        assertEquals("", viewModel.uiState.value.query)
+
+        letSearchSettle()
+        assertEquals("to c", viewModel.uiState.value.query)
+        assertEquals(listOf("kochen"), viewModel.uiState.value.words.map { it.id })
+    }
+
+    @Test
+    fun blankQueryIsNotASearch() = runWithViewModel { viewModel ->
+        viewModel.onQueryChange("   ")
+        letSearchSettle()
+
+        assertTrue(!viewModel.uiState.value.isSearching)
+        assertTrue(viewModel.uiState.value.words.isEmpty())
+    }
+
+    @Test
+    fun queryWithoutMatchesGivesAnEmptyList() = runWithViewModel { viewModel ->
+        viewModel.onQueryChange("zzz")
+        letSearchSettle()
+
+        assertTrue(viewModel.uiState.value.isSearching)
+        assertTrue(viewModel.uiState.value.words.isEmpty())
     }
 }
