@@ -52,6 +52,10 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-core")
 
+    // ViewModel + lifecycle-aware state collection
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
+
     // Room
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")
@@ -60,6 +64,7 @@ dependencies {
 
     // Unit tests (run on the JVM, no emulator needed)
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 
     // Instrumented tests
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.10.01"))
