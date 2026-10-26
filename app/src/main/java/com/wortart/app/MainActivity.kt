@@ -19,10 +19,12 @@ import com.wortart.app.ui.MainScreen
 import com.wortart.app.ui.explore.ExploreRoute
 import com.wortart.app.ui.explore.ExploreViewModel
 import com.wortart.app.ui.flashcard.FlashcardDeck
+import com.wortart.app.ui.rules.GrammarRulesRoute
+import com.wortart.app.ui.rules.RulesViewModel
 import com.wortart.app.ui.theme.WortArtTheme
 import kotlinx.coroutines.launch
 
-/** Hosts the app shell: Practice (flashcards) and Explore tabs. */
+/** Hosts the app shell: Practice (flashcards), Explore and Rules tabs. */
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,6 +43,8 @@ class MainActivity : ComponentActivity() {
 
                 val exploreViewModel: ExploreViewModel =
                     viewModel(factory = ExploreViewModel.factory(repository))
+                val rulesViewModel: RulesViewModel =
+                    viewModel(factory = RulesViewModel.factory(repository))
 
                 MainScreen(
                     practice = {
@@ -68,6 +72,9 @@ class MainActivity : ComponentActivity() {
                     },
                     explore = {
                         ExploreRoute(viewModel = exploreViewModel, modifier = Modifier.fillMaxSize())
+                    },
+                    rules = {
+                        GrammarRulesRoute(viewModel = rulesViewModel, modifier = Modifier.fillMaxSize())
                     },
                 )
             }
