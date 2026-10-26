@@ -46,6 +46,7 @@ import com.wortart.app.ui.theme.WortArtColors
  *
  * @param onAnswered called once per card with whether the answer was correct
  *   (Task 4.1 will use it for statistics).
+ * @param speakingCardId id of the card whose pronunciation is playing; its audio button is highlighted.
  */
 @Composable
 fun FlashcardDeck(
@@ -54,6 +55,7 @@ fun FlashcardDeck(
     onToggleFavorite: (VocabEntity) -> Unit,
     modifier: Modifier = Modifier,
     onAnswered: (card: VocabEntity, isCorrect: Boolean) -> Unit = { _, _ -> },
+    speakingCardId: String? = null,
 ) {
     var index by rememberSaveable { mutableIntStateOf(0) }
     val answers = remember { mutableStateMapOf<String, String>() }
@@ -123,6 +125,7 @@ fun FlashcardDeck(
                     onSpeak = { onSpeak(card) },
                     onToggleFavorite = { onToggleFavorite(card) },
                     modifier = Modifier.fillMaxSize(),
+                    isSpeaking = card.id == speakingCardId,
                     choiceContent = choiceContent,
                 )
             }
