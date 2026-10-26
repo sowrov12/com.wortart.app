@@ -9,13 +9,18 @@ import com.wortart.app.data.local.entity.VocabEntity
 import com.wortart.app.data.repository.VocabFilter
 import com.wortart.app.data.repository.VocabRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -34,28 +39,56 @@ data class ExploreUiState(
     val destination: ExploreDestination = ExploreDestination.Topics,
     /** Selected CEFR level, or null for all levels. */
     val level: String? = null,
+    /** The search text that is currently applied (trimmed, after the short typing delay). */
+    val query: String = "",
     /** All topics with the number of words that match the selected level. */
     val topics: List<TopicSummary> = emptyList(),
-    /** Words of the open topic (empty while the grid is shown). */
+    /**
+     * Words to list: search results while [isSearching], otherwise the words of the open
+     * topic. Empty while the topic grid is shown.
+     */
     val words: List<VocabEntity> = emptyList(),
 ) {
+    val isSearching: Boolean get() = query.isNotEmpty()
     val totalWords: Int get() = topics.sumOf { it.wordCount }
 }
 
 /**
- * State holder for the Explore tab. The UI observes [uiState]; user actions are the
- * functions below. Task 3.2 adds live search to the same pipeline.
+ * State holder for the Explore tab.
+ *
+ * Search: [query] is the raw text of the search field and updates immediately. The word
+ * list reacts to a trimmed, debounced copy of it, so fast typing does not trigger a database
+ * query per keystroke, while clearing the field is applied at once. Search covers German,
+ * English and Bengali text, respects the level chips and, when a topic is open, stays inside
+ * that topic.
  */
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class ExploreViewModel(private val repository: VocabRepository) : ViewModel() {
 
     private val destination = MutableStateFlow<ExploreDestination>(ExploreDestination.Topics)
     private val level = MutableStateFlow<String?>(null)
+    private val rawQuery = MutableStateFlow("")
+
+    /** Text of the search field, exactly as typed. */
+    val query: StateFlow<String> = rawQuery.asStateFlow()
+
+    private val appliedQuery: Flow<String> = rawQuery
+        .map { it.trim() }
+        .debounce { text -> if (text.isEmpty()) 0L else SEARCH_DEBOUNCE_MS }
+        .distinctUntilChanged()
 
     val uiState: StateFlow<ExploreUiState> =
-        combine(destination, level) { dest, lvl -> dest to lvl }
-            .flatMapLatest { (dest, lvl) -> stateFor(dest, lvl) }
+        combine(destination, level, appliedQuery) { dest, lvl, text -> Triple(dest, lvl, text) }
+            .flatMapLatest { (dest, lvl, text) -> stateFor(dest, lvl, text) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ExploreUiState())
+
+    fun onQueryChange(text: String) {
+        rawQuery.value = text
+    }
+
+    fun clearQuery() {
+        rawQuery.value = ""
+    }
 
     /** Opens the word list of [topic]; null opens all words. */
     fun openTopic(topic: String?) {
@@ -75,7 +108,7 @@ class ExploreViewModel(private val repository: VocabRepository) : ViewModel() {
         viewModelScope.launch { repository.setFavorite(card.id, !card.isFavorite) }
     }
 
-    private fun stateFor(dest: ExploreDestination, lvl: String?): Flow<ExploreUiState> {
+    private fun stateFor(dest: ExploreDestination, lvl: String?, text: String): Flow<ExploreUiState> {
         val topicsFlow = combine(
             repository.observeTopics(),
             repository.observeWords(VocabFilter(level = lvl)),
@@ -84,14 +117,17 @@ class ExploreViewModel(private val repository: VocabRepository) : ViewModel() {
             sortTopics(names).map { TopicSummary(it, counts[it] ?: 0) }
         }
 
-        val wordsFlow: Flow<List<VocabEntity>> = when (dest) {
-            ExploreDestination.Topics -> flowOf(emptyList())
-            is ExploreDestination.Words ->
+        val openTopic = (dest as? ExploreDestination.Words)?.topic
+        val wordsFlow: Flow<List<VocabEntity>> = when {
+            text.isNotEmpty() ->
+                repository.observeWords(VocabFilter(query = text, level = lvl, topic = openTopic))
+            dest is ExploreDestination.Words ->
                 repository.observeWords(VocabFilter(level = lvl, topic = dest.topic))
+            else -> flowOf(emptyList())
         }
 
         return combine(topicsFlow, wordsFlow) { topics, words ->
-            ExploreUiState(destination = dest, level = lvl, topics = topics, words = words)
+            ExploreUiState(destination = dest, level = lvl, query = text, topics = topics, words = words)
         }
     }
 
@@ -105,6 +141,9 @@ class ExploreViewModel(private val repository: VocabRepository) : ViewModel() {
     }
 
     companion object {
+        /** How long typing must pause before the search runs. */
+        const val SEARCH_DEBOUNCE_MS = 150L
+
         private val FEATURED_TOPICS = listOf("Food", "Career", "Health")
 
         fun factory(repository: VocabRepository): ViewModelProvider.Factory = viewModelFactory {
