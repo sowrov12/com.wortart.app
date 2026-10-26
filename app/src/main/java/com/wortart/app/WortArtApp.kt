@@ -3,6 +3,8 @@ package com.wortart.app
 import android.app.Application
 import com.wortart.app.data.local.WortArtDatabase
 import com.wortart.app.data.local.seed.VocabSeeder
+import com.wortart.app.data.repository.StatsRepository
+import com.wortart.app.data.repository.StatsRepositoryImpl
 import com.wortart.app.data.repository.VocabRepository
 import com.wortart.app.data.repository.VocabRepositoryImpl
 import kotlinx.coroutines.CoroutineScope
@@ -23,6 +25,8 @@ class WortArtApp : Application() {
     val database: WortArtDatabase by lazy { WortArtDatabase.getInstance(this) }
 
     val vocabRepository: VocabRepository by lazy { VocabRepositoryImpl(database.vocabDao()) }
+
+    val statsRepository: StatsRepository by lazy { StatsRepositoryImpl(database.userStatsDao()) }
 
     override fun onCreate() {
         super.onCreate()
