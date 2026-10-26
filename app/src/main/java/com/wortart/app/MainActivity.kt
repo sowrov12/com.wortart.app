@@ -5,26 +5,24 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wortart.app.audio.PronunciationAction
 import com.wortart.app.audio.TextToSpeechHelper
 import com.wortart.app.audio.actionFor
+import com.wortart.app.ui.MainScreen
+import com.wortart.app.ui.explore.ExploreRoute
+import com.wortart.app.ui.explore.ExploreViewModel
 import com.wortart.app.ui.flashcard.FlashcardDeck
-import com.wortart.app.ui.theme.WortArtColors
 import com.wortart.app.ui.theme.WortArtTheme
 import kotlinx.coroutines.launch
 
-/**
- * Temporary host screen for the flashcard UI.
- * Phase 3 replaces it with bottom navigation (Practice / Explore / Rules / Stats).
- */
+/** Hosts the app shell: Practice (flashcards) and Explore tabs. */
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,34 +39,37 @@ class MainActivity : ComponentActivity() {
                 DisposableEffect(speech) { onDispose { speech.shutdown() } }
                 val speechState by speech.state.collectAsState()
 
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = WortArtColors.Background,
-                ) {
-                    FlashcardDeck(
-                        words = words,
-                        speakingCardId = speechState.speakingId,
-                        onSpeak = { card ->
-                            when (speechState.actionFor(card.id)) {
-                                PronunciationAction.SPEAK -> speech.speak(card.word, card.id)
-                                PronunciationAction.STOP -> speech.stop()
-                                PronunciationAction.GERMAN_VOICE_MISSING -> toast(
-                                    "German voice is not installed. " +
-                                        "Add it in Settings › Text-to-speech output.",
-                                )
-                                PronunciationAction.UNAVAILABLE -> toast(
-                                    "Text-to-speech is not available on this device.",
-                                )
-                            }
-                        },
-                        onToggleFavorite = { card ->
-                            scope.launch { repository.setFavorite(card.id, !card.isFavorite) }
-                        },
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .safeDrawingPadding(),
-                    )
-                }
+                val exploreViewModel: ExploreViewModel =
+                    viewModel(factory = ExploreViewModel.factory(repository))
+
+                MainScreen(
+                    practice = {
+                        FlashcardDeck(
+                            words = words,
+                            speakingCardId = speechState.speakingId,
+                            onSpeak = { card ->
+                                when (speechState.actionFor(card.id)) {
+                                    PronunciationAction.SPEAK -> speech.speak(card.word, card.id)
+                                    PronunciationAction.STOP -> speech.stop()
+                                    PronunciationAction.GERMAN_VOICE_MISSING -> toast(
+                                        "German voice is not installed. " +
+                                            "Add it in Settings › Text-to-speech output.",
+                                    )
+                                    PronunciationAction.UNAVAILABLE -> toast(
+                                        "Text-to-speech is not available on this device.",
+                                    )
+                                }
+                            },
+                            onToggleFavorite = { card ->
+                                scope.launch { repository.setFavorite(card.id, !card.isFavorite) }
+                            },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    },
+                    explore = {
+                        ExploreRoute(viewModel = exploreViewModel, modifier = Modifier.fillMaxSize())
+                    },
+                )
             }
         }
     }
