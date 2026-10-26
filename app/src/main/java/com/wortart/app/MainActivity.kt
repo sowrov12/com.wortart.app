@@ -19,17 +19,22 @@ import com.wortart.app.ui.MainScreen
 import com.wortart.app.ui.explore.ExploreRoute
 import com.wortart.app.ui.explore.ExploreViewModel
 import com.wortart.app.ui.flashcard.FlashcardDeck
+import com.wortart.app.ui.flashcard.TrackPracticeTime
 import com.wortart.app.ui.rules.GrammarRulesRoute
 import com.wortart.app.ui.rules.RulesViewModel
+import com.wortart.app.ui.stats.StatsRoute
+import com.wortart.app.ui.stats.StatsViewModel
 import com.wortart.app.ui.theme.WortArtTheme
 import kotlinx.coroutines.launch
 
-/** Hosts the app shell: Practice (flashcards), Explore and Rules tabs. */
+/** Hosts the app shell: Practice (flashcards), Explore, Rules and Stats tabs. */
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val repository = (application as WortArtApp).vocabRepository
+        val app = application as WortArtApp
+        val repository = app.vocabRepository
+        val statsRepository = app.statsRepository
 
         setContent {
             WortArtTheme {
@@ -45,9 +50,14 @@ class MainActivity : ComponentActivity() {
                     viewModel(factory = ExploreViewModel.factory(repository))
                 val rulesViewModel: RulesViewModel =
                     viewModel(factory = RulesViewModel.factory(repository))
+                val statsViewModel: StatsViewModel =
+                    viewModel(factory = StatsViewModel.factory(statsRepository))
 
                 MainScreen(
                     practice = {
+                        TrackPracticeTime { seconds ->
+                            scope.launch { statsRepository.addPracticeTime(seconds) }
+                        }
                         FlashcardDeck(
                             words = words,
                             speakingCardId = speechState.speakingId,
@@ -67,6 +77,9 @@ class MainActivity : ComponentActivity() {
                             onToggleFavorite = { card ->
                                 scope.launch { repository.setFavorite(card.id, !card.isFavorite) }
                             },
+                            onAnswered = { _, isCorrect ->
+                                scope.launch { statsRepository.recordAnswer(isCorrect) }
+                            },
                             modifier = Modifier.fillMaxSize(),
                         )
                     },
@@ -75,6 +88,9 @@ class MainActivity : ComponentActivity() {
                     },
                     rules = {
                         GrammarRulesRoute(viewModel = rulesViewModel, modifier = Modifier.fillMaxSize())
+                    },
+                    stats = {
+                        StatsRoute(viewModel = statsViewModel, modifier = Modifier.fillMaxSize())
                     },
                 )
             }
