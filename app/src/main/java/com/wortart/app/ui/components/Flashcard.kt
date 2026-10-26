@@ -142,7 +142,7 @@ fun FlashcardView(
 }
 
 @Composable
-private fun LevelBadge(level: String) {
+internal fun LevelBadge(level: String) {
     Text(
         text = level,
         color = WortArtColors.OnGold,
@@ -168,7 +168,7 @@ private fun GrammarTag(text: String) {
 }
 
 @Composable
-private fun FavoriteButton(isFavorite: Boolean, onClick: () -> Unit) {
+internal fun FavoriteButton(isFavorite: Boolean, onClick: () -> Unit) {
     IconButton(onClick = onClick) {
         Icon(
             imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
