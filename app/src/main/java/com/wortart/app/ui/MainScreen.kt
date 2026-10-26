@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -24,11 +25,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.wortart.app.ui.theme.WortArtColors
 
-/** Bottom navigation tabs. Stats (Task 4.1) is added later. */
+/** Bottom navigation tabs. */
 enum class MainTab(val label: String, val icon: ImageVector) {
     Practice("Practice", Icons.Filled.PlayArrow),
     Explore("Explore", Icons.Filled.Search),
     Rules("Rules", Icons.Filled.Info),
+    Stats("Stats", Icons.Filled.Star),
 }
 
 /**
@@ -40,6 +42,7 @@ fun MainScreen(
     practice: @Composable () -> Unit,
     explore: @Composable () -> Unit,
     rules: @Composable () -> Unit,
+    stats: @Composable () -> Unit,
 ) {
     var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
     val stateHolder: SaveableStateHolder = rememberSaveableStateHolder()
@@ -76,6 +79,7 @@ fun MainScreen(
                     MainTab.Practice -> practice()
                     MainTab.Explore -> explore()
                     MainTab.Rules -> rules()
+                    MainTab.Stats -> stats()
                 }
             }
         }
