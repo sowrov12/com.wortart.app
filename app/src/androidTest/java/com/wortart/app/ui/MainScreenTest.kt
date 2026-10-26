@@ -25,6 +25,7 @@ class MainScreenTest {
                 MainScreen(
                     practice = { Text("practice-content") },
                     explore = { Text("explore-content") },
+                    rules = { Text("rules-content") },
                 )
             }
         }
@@ -35,6 +36,10 @@ class MainScreenTest {
         composeRule.onNodeWithText("Explore").performClick()
         composeRule.onNodeWithText("explore-content").assertExists()
         composeRule.onNodeWithText("practice-content").assertDoesNotExist()
+
+        composeRule.onNodeWithText("Rules").performClick()
+        composeRule.onNodeWithText("rules-content").assertExists()
+        composeRule.onNodeWithText("explore-content").assertDoesNotExist()
 
         composeRule.onNodeWithText("Practice").performClick()
         composeRule.onNodeWithText("practice-content").assertExists()
