@@ -1,11 +1,14 @@
 package com.wortart.app.ui.explore
 
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.wortart.app.data.local.entity.VocabEntity
 import com.wortart.app.ui.theme.WortArtTheme
@@ -46,6 +49,8 @@ class ExploreScreenTest {
 
     private fun show(
         state: ExploreUiState,
+        query: String = state.query,
+        onQueryChange: (String) -> Unit = {},
         onSelectLevel: (String?) -> Unit = {},
         onOpenTopic: (String?) -> Unit = {},
         onCloseTopic: () -> Unit = {},
@@ -55,6 +60,8 @@ class ExploreScreenTest {
             WortArtTheme {
                 ExploreScreen(
                     state = state,
+                    query = query,
+                    onQueryChange = onQueryChange,
                     onSelectLevel = onSelectLevel,
                     onOpenTopic = onOpenTopic,
                     onCloseTopic = onCloseTopic,
@@ -152,5 +159,65 @@ class ExploreScreenTest {
         show(ExploreUiState(destination = ExploreDestination.Words("Food"), topics = topicsState.topics))
 
         composeRule.onNodeWithText("No words found.").assertExists()
+    }
+
+    // ---- Search ----
+
+    @Test
+    fun searchFieldShowsPlaceholderAndReportsTyping() {
+        val typed = mutableListOf<String>()
+        show(topicsState, onQueryChange = { typed += it })
+
+        composeRule.onNodeWithText("Search German, English or Bengali").assertExists()
+        composeRule.onNodeWithTag("searchField").performTextInput("kochen")
+
+        composeRule.runOnIdle { assertEquals(listOf("kochen"), typed) }
+    }
+
+    @Test
+    fun clearButtonIsHiddenWhileTheFieldIsEmpty() {
+        show(topicsState, query = "")
+        composeRule.onNodeWithContentDescription("Clear search").assertDoesNotExist()
+    }
+
+    @Test
+    fun clearButtonResetsTheQuery() {
+        val typed = mutableListOf<String>()
+        show(topicsState.copy(query = "abc"), query = "abc", onQueryChange = { typed += it })
+
+        composeRule.onNodeWithContentDescription("Clear search").performClick()
+
+        composeRule.runOnIdle { assertEquals(listOf(""), typed) }
+    }
+
+    @Test
+    fun searchResultsReplaceTheTopicGrid() {
+        show(
+            ExploreUiState(
+                destination = ExploreDestination.Topics,
+                query = "cook",
+                topics = topicsState.topics,
+                words = listOf(kochen),
+            ),
+        )
+
+        composeRule.onNodeWithText("Search results").assertExists()
+        composeRule.onNodeWithText("1 word").assertExists()
+        composeRule.onNodeWithText("kochen").assertExists()
+        composeRule.onNodeWithText("All words").assertDoesNotExist()
+        composeRule.onNodeWithText("‹ Topics").assertDoesNotExist()
+    }
+
+    @Test
+    fun searchWithoutMatchesNamesTheQuery() {
+        show(
+            ExploreUiState(
+                destination = ExploreDestination.Topics,
+                query = "xyz",
+                topics = topicsState.topics,
+            ),
+        )
+
+        composeRule.onNodeWithText("No results for “xyz”.").assertExists()
     }
 }
