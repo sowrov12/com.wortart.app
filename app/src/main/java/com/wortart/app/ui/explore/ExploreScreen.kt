@@ -24,8 +24,17 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -34,8 +43,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -50,13 +62,17 @@ import com.wortart.app.ui.theme.WortArtColors
 @Composable
 fun ExploreRoute(viewModel: ExploreViewModel, modifier: Modifier = Modifier) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val query by viewModel.query.collectAsStateWithLifecycle()
 
-    BackHandler(enabled = state.destination is ExploreDestination.Words) {
-        viewModel.closeTopic()
+    // Back first clears the search text, then leaves the open topic.
+    BackHandler(enabled = query.isNotEmpty() || state.destination is ExploreDestination.Words) {
+        if (query.isNotEmpty()) viewModel.clearQuery() else viewModel.closeTopic()
     }
 
     ExploreScreen(
         state = state,
+        query = query,
+        onQueryChange = viewModel::onQueryChange,
         onSelectLevel = viewModel::selectLevel,
         onOpenTopic = viewModel::openTopic,
         onCloseTopic = viewModel::closeTopic,
@@ -66,12 +82,16 @@ fun ExploreRoute(viewModel: ExploreViewModel, modifier: Modifier = Modifier) {
 }
 
 /**
- * Explore tab: level filter chips on top, then either the topic grid or the
- * word list of the chosen topic. Stateless; everything comes from [state].
+ * Explore tab: search field and level filter chips on top, then either the topic grid
+ * or a word list (an open topic, or search results). Stateless.
+ *
+ * @param query the text of the search field, exactly as typed.
  */
 @Composable
 fun ExploreScreen(
     state: ExploreUiState,
+    query: String,
+    onQueryChange: (String) -> Unit,
     onSelectLevel: (String?) -> Unit,
     onOpenTopic: (String?) -> Unit,
     onCloseTopic: () -> Unit,
@@ -86,18 +106,27 @@ fun ExploreScreen(
         Spacer(Modifier.height(16.dp))
         ExploreHeader(state = state, onBack = onCloseTopic)
         Spacer(Modifier.height(14.dp))
+        SearchField(query = query, onQueryChange = onQueryChange)
+        Spacer(Modifier.height(12.dp))
         LevelChips(selected = state.level, onSelect = onSelectLevel)
         Spacer(Modifier.height(16.dp))
 
-        when (state.destination) {
-            ExploreDestination.Topics -> TopicGrid(
+        val showList = state.destination is ExploreDestination.Words || state.isSearching
+        if (showList) {
+            WordList(
+                words = state.words,
+                emptyMessage = if (state.isSearching) {
+                    "No results for “${state.query}”."
+                } else {
+                    "No words found."
+                },
+                onToggleFavorite = onToggleFavorite,
+            )
+        } else {
+            TopicGrid(
                 topics = state.topics,
                 totalWords = state.totalWords,
                 onOpenTopic = onOpenTopic,
-            )
-            is ExploreDestination.Words -> WordList(
-                words = state.words,
-                onToggleFavorite = onToggleFavorite,
             )
         }
     }
@@ -110,13 +139,17 @@ private fun ExploreHeader(state: ExploreUiState, onBack: () -> Unit) {
     when (val destination = state.destination) {
         ExploreDestination.Topics -> Column {
             Text(
-                text = "Explore",
+                text = if (state.isSearching) "Search results" else "Explore",
                 color = WortArtColors.TextPrimary,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                text = "Browse words by topic and level",
+                text = if (state.isSearching) {
+                    wordCountLabel(state.words.size)
+                } else {
+                    "Browse words by topic and level"
+                },
                 color = WortArtColors.TextSecondary,
                 fontSize = 14.sp,
             )
@@ -145,6 +178,47 @@ private fun ExploreHeader(state: ExploreUiState, onBack: () -> Unit) {
             )
         }
     }
+}
+
+@Composable
+private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
+    val focusManager = LocalFocusManager.current
+
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("searchField"),
+        singleLine = true,
+        shape = RoundedCornerShape(16.dp),
+        placeholder = {
+            Text(text = "Search German, English or Bengali", color = WortArtColors.TextMuted)
+        },
+        leadingIcon = { Icon(imageVector = Icons.Filled.Search, contentDescription = null) },
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(imageVector = Icons.Filled.Close, contentDescription = "Clear search")
+                }
+            }
+        },
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedTextColor = WortArtColors.TextPrimary,
+            unfocusedTextColor = WortArtColors.TextPrimary,
+            focusedContainerColor = WortArtColors.Surface,
+            unfocusedContainerColor = WortArtColors.Surface,
+            cursorColor = WortArtColors.Gold,
+            focusedBorderColor = WortArtColors.Gold,
+            unfocusedBorderColor = WortArtColors.Gold.copy(alpha = 0.4f),
+            focusedLeadingIconColor = WortArtColors.Gold,
+            unfocusedLeadingIconColor = WortArtColors.TextMuted,
+            focusedTrailingIconColor = WortArtColors.Gold,
+            unfocusedTrailingIconColor = WortArtColors.TextSecondary,
+        ),
+    )
 }
 
 @Composable
@@ -257,9 +331,13 @@ private fun TopicCard(emoji: String, title: String, wordCount: Int, onClick: () 
 }
 
 @Composable
-private fun WordList(words: List<VocabEntity>, onToggleFavorite: (VocabEntity) -> Unit) {
+private fun WordList(
+    words: List<VocabEntity>,
+    emptyMessage: String,
+    onToggleFavorite: (VocabEntity) -> Unit,
+) {
     if (words.isEmpty()) {
-        Text(text = "No words found.", color = WortArtColors.TextSecondary, fontSize = 15.sp)
+        Text(text = emptyMessage, color = WortArtColors.TextSecondary, fontSize = 15.sp)
         return
     }
 
