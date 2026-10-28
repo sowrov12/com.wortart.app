@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
@@ -31,6 +32,7 @@ enum class MainTab(val label: String, val icon: ImageVector) {
     Explore("Explore", Icons.Filled.Search),
     Rules("Rules", Icons.Filled.Info),
     Stats("Stats", Icons.Filled.Star),
+    Members("Members", Icons.Filled.Person),
 }
 
 /**
@@ -43,6 +45,7 @@ fun MainScreen(
     explore: @Composable () -> Unit,
     rules: @Composable () -> Unit,
     stats: @Composable () -> Unit,
+    members: @Composable () -> Unit,
 ) {
     var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
     val stateHolder: SaveableStateHolder = rememberSaveableStateHolder()
@@ -80,6 +83,7 @@ fun MainScreen(
                     MainTab.Explore -> explore()
                     MainTab.Rules -> rules()
                     MainTab.Stats -> stats()
+                    MainTab.Members -> members()
                 }
             }
         }
