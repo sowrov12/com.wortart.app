@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "4643522409",
+    "project_id": "wortart-app",
+    "storage_bucket": "wortart-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:4643522409:android:c6803abc3e7c2ed9251ff8",
+        "android_client_info": {
+          "package_name": "com.wortart.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "4643522409-b854vbgrvh0ql5km9fa4a007fdo4t1d7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wortart.app",
+            "certificate_hash": "4e42c005ecaffaadbb3865a68bac13ae5b225a91"
+          }
+        },
+        {
+          "client_id": "4643522409-e0ed6q2v3qrgif634qg16srrbbacejdn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCYV9omQg52NYzIjYqe-luJAG56hSKOK_A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "4643522409-e0ed6q2v3qrgif634qg16srrbbacejdn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
