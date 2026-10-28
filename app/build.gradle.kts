@@ -57,6 +57,12 @@ android {
     buildFeatures {
         compose = true
     }
+
+    testOptions {
+        // JVM unit tests may touch simple Android classes (for example TextUtils inside
+        // Firebase exceptions). Return default values instead of "Method ... not mocked".
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 // Exports Room schema JSON files (commit app/schemas/ to Git).
