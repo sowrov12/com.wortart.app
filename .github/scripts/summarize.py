@@ -70,8 +70,18 @@ def emit_annotations(error_lines):
         shown += 1
 
 
+# Messages of the Kotlin compile daemon failing to start. Kotlin falls back to compiling
+# without it, so they say nothing about errors in the code.
+DAEMON_NOISE = re.compile(
+    r"^e: (The daemon has terminated|Failed connecting to the daemon|Daemon compilation failed)"
+)
+
+
 def failure_section(lines):
-    kotlin_errors = [line for line in lines if line.startswith("e: ")]
+    kotlin_errors = [
+        line for line in lines
+        if line.startswith("e: ") and not DAEMON_NOISE.match(line)
+    ]
     other_errors = [
         line for line in lines
         if re.search(r"\berror:", line) and not line.startswith("e: ")
