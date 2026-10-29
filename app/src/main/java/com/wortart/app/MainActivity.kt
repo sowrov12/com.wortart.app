@@ -57,7 +57,7 @@ class MainActivity : ComponentActivity() {
                 val exploreViewModel: ExploreViewModel =
                     viewModel(factory = ExploreViewModel.factory(repository))
                 val rulesViewModel: RulesViewModel =
-                    viewModel(factory = RulesViewModel.factory(repository))
+                    viewModel(factory = RulesViewModel.factory(repository, app.lessonsRepository))
                 val statsViewModel: StatsViewModel =
                     viewModel(factory = StatsViewModel.factory(statsRepository))
                 val membersViewModel: MembersViewModel = viewModel(
