@@ -1,0 +1,1766 @@
+{
+ "version": 1,
+ "genderColors": {
+  "der": "#4C8DFF",
+  "die": "#FF5A5F",
+  "das": "#2EB67D"
+ },
+ "sections": [
+  {
+   "id": "articles",
+   "level": "A1",
+   "icon": "menu_book",
+   "title": {
+    "de": "Artikel & Fälle",
+    "en": "Articles & cases",
+    "bn": "আর্টিকেল ও কেস"
+   },
+   "summary": {
+    "en": "der / die / das and what job a noun does in the sentence.",
+    "bn": "der / die / das এবং বাক্যে noun-এর ভূমিকা।"
+   },
+   "blocks": [
+    {
+     "type": "text",
+     "en": "Every German noun has a gender (der, die, das). The case tells you what the noun is doing in the sentence, and the article changes with it.",
+     "bn": "প্রতিটি জার্মান noun-এর একটি gender আছে (der, die, das)। কেস বলে দেয় বাক্যে noun-টি কী কাজ করছে, আর সেই অনুযায়ী আর্টিকেল বদলায়।"
+    },
+    {
+     "type": "table",
+     "headers": [
+      "Case",
+      "Job in sentence",
+      "Question"
+     ],
+     "rows": [
+      [
+       "Nominativ",
+       "Subject · কর্তা",
+       "Wer? Was?"
+      ],
+      [
+       "Akkusativ",
+       "Direct object · সরাসরি কর্ম",
+       "Wen? Was?"
+      ],
+      [
+       "Dativ",
+       "Indirect object · পরোক্ষ কর্ম",
+       "Wem?"
+      ],
+      [
+       "Genitiv",
+       "Possession · অধিকার",
+       "Wessen?"
+      ]
+     ]
+    },
+    {
+     "type": "table",
+     "headers": [
+      "",
+      "Nominativ",
+      "Akkusativ",
+      "Dativ"
+     ],
+     "rows": [
+      [
+       "der (m)",
+       "der / ein",
+       "den / einen",
+       "dem / einem"
+      ],
+      [
+       "die (f)",
+       "die / eine",
+       "die / eine",
+       "der / einer"
+      ],
+      [
+       "das (n)",
+       "das / ein",
+       "das / ein",
+       "dem / einem"
+      ],
+      [
+       "die (pl)",
+       "die / —",
+       "die / —",
+       "den / — (+n)"
+      ]
+     ],
+     "caption": {
+      "en": "Definite / indefinite",
+      "bn": "নির্দিষ্ট / অনির্দিষ্ট"
+     }
+    },
+    {
+     "type": "examples",
+     "items": [
+      {
+       "de": "Der Mann liest ein Buch.",
+       "en": "The man reads a book.",
+       "bn": "লোকটি একটি বই পড়ছে।",
+       "mark": "Der Mann"
+      },
+      {
+       "de": "Ich sehe den Mann.",
+       "en": "I see the man.",
+       "bn": "আমি লোকটিকে দেখছি।",
+       "mark": "den Mann"
+      },
+      {
+       "de": "Ich helfe dem Mann.",
+       "en": "I help the man.",
+       "bn": "আমি লোকটিকে সাহায্য করছি।",
+       "mark": "dem Mann"
+      }
+     ]
+    },
+    {
+     "type": "tip",
+     "en": "From Nominativ to Akkusativ, only the masculine changes: der → den, ein → einen.",
+     "bn": "Nominativ থেকে Akkusativ-এ শুধু masculine বদলায়: der → den, ein → einen।"
+    },
+    {
+     "type": "mistake",
+     "wrong": "Ich sehe der Mann.",
+     "right": "Ich sehe den Mann.",
+     "en": "After most verbs the object is Akkusativ.",
+     "bn": "বেশির ভাগ verb-এর পরে object Akkusativ-এ থাকে।"
+    }
+   ],
+   "quiz": [
+    {
+     "q": "Ich kaufe ___ Tisch. (der Tisch)",
+     "options": [
+      "ein",
+      "einen",
+      "einem"
+     ],
+     "answer": 1,
+     "why": {
+      "en": "Tisch is masculine and the direct object, so einen.",
+      "bn": "Tisch masculine এবং direct object, তাই einen।"
+     }
+    }
+   ]
+  },
+  {
+   "id": "gender",
+   "level": "A1",
+   "icon": "category",
+   "title": {
+    "de": "Genus-Regeln",
+    "en": "Gender patterns",
+    "bn": "লিঙ্গ চেনার নিয়ম"
+   },
+   "summary": {
+    "en": "Guess der / die / das from the ending of the word.",
+    "bn": "শব্দের শেষ অংশ দেখে der / die / das আন্দাজ করুন।"
+   },
+   "blocks": [
+    {
+     "type": "text",
+     "en": "Most of the time the ending (or meaning) of a noun tells you its gender. Learn the noun together with its article.",
+     "bn": "বেশির ভাগ সময় noun-এর শেষ অংশ বা অর্থ দেখেই gender বোঝা যায়। Noun সবসময় আর্টিকেলসহ মুখস্থ করুন।"
+    },
+    {
+     "type": "table",
+     "headers": [
+      "Gender",
+      "Pattern",
+      "Examples"
+     ],
+     "rows": [
+      [
+       "der",
+       "Days, months, seasons",
+       "der Montag, der Juli, der Winter"
+      ],
+      [
+       "der",
+       "-er (person), -ling, -ismus, -or",
+       "der Lehrer, der Lehrling, der Tourismus, der Motor"
+      ],
+      [
+       "die",
+       "-ung, -heit, -keit, -schaft",
+       "die Zeitung, die Freiheit, die Möglichkeit, die Freundschaft"
+      ],
+      [
+       "die",
+       "-ion, -tät, -ur, -ei",
+       "die Nation, die Universität, die Kultur, die Bäckerei"
+      ],
+      [
+       "die",
+       "-in (female person)",
+       "die Lehrerin, die Ärztin"
+      ],
+      [
+       "das",
+       "-chen, -lein (small things)",
+       "das Mädchen, das Brötchen"
+      ],
+      [
+       "das",
+       "-ment, -um",
+       "das Dokument, das Datum"
+      ],
+      [
+       "das",
+       "Verb used as noun",
+       "das Essen, das Lernen"
+      ]
+     ]
+    },
+    {
+     "type": "tip",
+     "en": "Colour code used in this app: der = blue, die = red, das = green.",
+     "bn": "এই অ্যাপে রং: der = নীল, die = লাল, das = সবুজ।"
+    },
+    {
+     "type": "mistake",
+     "wrong": "die Mädchen",
+     "right": "das Mädchen",
+     "en": "-chen words are always neuter, even for girls.",
+     "bn": "-chen শেষ হলে শব্দ সবসময় neuter, মেয়ে বোঝালেও।"
+    }
+   ],
+   "quiz": [
+    {
+     "q": "Which article? ___ Zeitung",
+     "options": [
+      "der",
+      "die",
+      "das"
+     ],
+     "answer": 1,
+     "why": {
+      "en": "-ung is always feminine.",
+      "bn": "-ung শেষ হলে সবসময় feminine।"
+     }
+    }
+   ]
+  },
+  {
+   "id": "plural",
+   "level": "A1",
+   "icon": "filter_none",
+   "title": {
+    "de": "Plural",
+    "en": "Plural forms",
+    "bn": "বহুবচন"
+   },
+   "summary": {
+    "en": "The most common ways to form the plural.",
+    "bn": "বহুবচন বানানোর সবচেয়ে প্রচলিত উপায়।"
+   },
+   "blocks": [
+    {
+     "type": "text",
+     "en": "German has many plural forms. These six patterns cover most nouns.",
+     "bn": "জার্মানে বহুবচনের অনেক রূপ আছে। এই ছয়টি প্যাটার্নে বেশির ভাগ noun পড়ে।"
+    },
+    {
+     "type": "table",
+     "headers": [
+      "Pattern",
+      "Example"
+     ],
+     "rows": [
+      [
+       "-e (often with ¨)",
+       "der Tisch → die Tische · der Stuhl → die Stühle"
+      ],
+      [
+       "-n / -en",
+       "die Tasche → die Taschen · die Frau → die Frauen"
+      ],
+      [
+       "-er (with ¨ if possible)",
+       "das Kind → die Kinder · das Haus → die Häuser"
+      ],
+      [
+       "no change",
+       "der Lehrer → die Lehrer · das Zimmer → die Zimmer"
+      ],
+      [
+       "-s (foreign words)",
+       "das Auto → die Autos · das Handy → die Handys"
+      ],
+      [
+       "¨ only",
+       "der Vater → die Väter · der Apfel → die Äpfel"
+      ]
+     ]
+    },
+    {
+     "type": "tip",
+     "en": "Feminine nouns mostly take -n / -en. Always learn the plural with the noun: der Tisch, -e.",
+     "bn": "Feminine noun-এ প্রায়ই -n / -en বসে। Noun-এর সঙ্গে plural-ও শিখুন: der Tisch, -e।"
+    }
+   ],
+   "quiz": [
+    {
+     "q": "Plural of das Kind?",
+     "options": [
+      "die Kinde",
+      "die Kinder",
+      "die Kinds"
+     ],
+     "answer": 1,
+     "why": {
+      "en": "Neuter nouns often take -er.",
+      "bn": "Neuter noun-এ প্রায়ই -er বসে।"
+     }
+    }
+   ]
+  },
+  {
+   "id": "pronouns",
+   "level": "A1",
+   "icon": "people",
+   "title": {
+    "de": "Pronomen & Possessivartikel",
+    "en": "Pronouns & possessives",
+    "bn": "সর্বনাম ও অধিকারবাচক শব্দ"
+   },
+   "summary": {
+    "en": "ich / mich / mir and mein / dein / sein.",
+    "bn": "ich / mich / mir এবং mein / dein / sein।"
+   },
+   "blocks": [
+    {
+     "type": "text",
+     "en": "A pronoun replaces a noun. In German even things get er / sie / es, depending on their gender (der Tisch → er, die Tasche → sie).",
+     "bn": "Pronoun noun-এর জায়গায় বসে। জার্মানে জিনিসের জন্যও gender অনুযায়ী er / sie / es ব্যবহার হয় (der Tisch → er, die Tasche → sie)।"
+    },
+    {
+     "type": "table",
+     "headers": [
+      "Person",
+      "Nominativ",
+      "Akkusativ",
+      "Dativ"
+     ],
+     "rows": [
+      [
+       "ich",
+       "ich",
+       "mich",
+       "mir"
+      ],
+      [
+       "du",
+       "du",
+       "dich",
+       "dir"
+      ],
+      [
+       "er",
+       "er",
+       "ihn",
+       "ihm"
+      ],
+      [
+       "sie (she)",
+       "sie",
+       "sie",
+       "ihr"
+      ],
+      [
+       "es",
+       "es",
+       "es",
+       "ihm"
+      ],
+      [
+       "wir",
+       "wir",
+       "uns",
+       "uns"
+      ],
+      [
+       "ihr",
+       "ihr",
+       "euch",
+       "euch"
+      ],
+      [
+       "sie / Sie",
+       "sie / Sie",
+       "sie / Sie",
+       "ihnen / Ihnen"
+      ]
+     ]
+    },
+    {
+     "type": "table",
+     "headers": [
+      "Person",
+      "m / n (Nom.)",
+      "f",
+      "Plural",
+      "m (Akk.)"
+     ],
+     "rows": [
+      [
+       "ich",
+       "mein",
+       "meine",
+       "meine",
+       "meinen"
+      ],
+      [
+       "du",
+       "dein",
+       "deine",
+       "deine",
+       "deinen"
+      ],
+      [
+       "er / es",
+       "sein",
+       "seine",
+       "seine",
+       "seinen"
+      ],
+      [
+       "sie",
+       "ihr",
+       "ihre",
+       "ihre",
+       "ihren"
+      ],
+      [
+       "wir",
+       "unser",
+       "unsere",
+       "unsere",
+       "unseren"
+      ],
+      [
+       "ihr",
+       "euer",
+       "eure",
+       "eure",
+       "euren"
+      ],
+      [
+       "sie / Sie",
+       "ihr / Ihr",
+       "ihre / Ihre",
+       "ihre / Ihre",
+       "ihren / Ihren"
+      ]
+     ],
+     "caption": {
+      "en": "Possessive articles",
+      "bn": "অধিকারবাচক আর্টিকেল"
+     }
+    },
+    {
+     "type": "tip",
+     "en": "Possessives take the same endings as ein / eine: mein Tisch, meine Tasche, ich sehe meinen Tisch.",
+     "bn": "Possessive-এর endings ein / eine-এর মতোই: mein Tisch, meine Tasche, ich sehe meinen Tisch।"
+    }
+   ],
+   "quiz": [
+    {
+     "q": "Ich sehe ___ Bruder. (my)",
+     "options": [
+      "mein",
+      "meine",
+      "meinen"
+     ],
+     "answer": 2,
+     "why": {
+      "en": "Bruder is masculine, Akkusativ: meinen.",
+      "bn": "Bruder masculine, Akkusativ: meinen।"
+     }
+    }
+   ]
+  },
+  {
+   "id": "praesens",
+   "level": "A1",
+   "icon": "schedule",
+   "title": {
+    "de": "Präsens",
+    "en": "Present tense",
+    "bn": "বর্তমান কাল"
+   },
+   "summary": {
+    "en": "Regular verb endings and when to use the present.",
+    "bn": "Regular verb-এর endings এবং Präsens কখন ব্যবহার হয়।"
+   },
+   "blocks": [
+    {
+     "type": "text",
+     "en": "Drop -en from the infinitive and add the ending. German has no -ing form: 'I am going' is simply Ich gehe.",
+     "bn": "Infinitive থেকে -en বাদ দিয়ে ending যোগ করুন। জার্মানে -ing ফর্ম নেই: 'I am going' হলো শুধু Ich gehe।"
+    },
+    {
+     "type": "table",
+     "headers": [
+      "Person",
+      "Ending",
+      "machen",
+      "arbeiten"
+     ],
+     "rows": [
+      [
+       "ich",
+       "-e",
+       "mache",
+       "arbeite"
+      ],
+      [
+       "du",
+       "-st",
+       "machst",
+       "arbeitest"
+      ],
+      [
+       "er / sie / es",
+       "-t",
+       "macht",
+       "arbeitet"
+      ],
+      [
+       "wir",
+       "-en",
+       "machen",
+       "arbeiten"
+      ],
+      [
+       "ihr",
+       "-t",
+       "macht",
+       "arbeitet"
+      ],
+      [
+       "sie / Sie",
+       "-en",
+       "machen",
+       "arbeiten"
+      ]
+     ]
+    },
+    {
+     "type": "text",
+     "en": "Use Präsens for: right now, general facts, habits, and the near future with a time word (morgen, nächste Woche).",
+     "bn": "Präsens ব্যবহার হয়: এখনকার কাজ, সাধারণ সত্য, অভ্যাস, আর সময়ের শব্দসহ ভবিষ্যৎ (morgen, nächste Woche)।"
+    },
+    {
+     "type": "tip",
+     "en": "Stem ends in -t, -d, -n, -m? Add an extra e: du arbeitest, er arbeitet. Stem ends in -s, -ß, -z? du heißt, du tanzt.",
+     "bn": "Stem -t, -d, -n, -m দিয়ে শেষ হলে বাড়তি e বসে: du arbeitest, er arbeitet। Stem -s, -ß, -z হলে: du heißt, du tanzt।"
+    },
+    {
+     "type": "examples",
+     "items": [
+      {
+       "de": "Lisa schläft.",
+       "en": "Lisa is sleeping.",
+       "bn": "লিসা ঘুমাচ্ছে।",
+       "mark": "schläft"
+      },
+      {
+       "de": "Morgen habe ich frei.",
+       "en": "Tomorrow I am off.",
+       "bn": "কাল আমার ছুটি।",
+       "mark": "Morgen"
+      }
+     ]
+    }
+   ],
+   "quiz": [
+    {
+     "q": "du ___ (arbeiten)",
+     "options": [
+      "arbeitst",
+      "arbeitest",
+      "arbeitet"
+     ],
+     "answer": 1,
+     "why": {
+      "en": "Stem ends in -t, so -est.",
+      "bn": "Stem -t দিয়ে শেষ, তাই -est।"
+     }
+    }
+   ]
+  },
+  {
+   "id": "irregular",
+   "level": "A1",
+   "icon": "bolt",
+   "title": {
+    "de": "Unregelmäßige Verben",
+    "en": "Irregular verbs",
+    "bn": "অনিয়মিত ক্রিয়া"
+   },
+   "summary": {
+    "en": "Verbs that change their vowel with du and er / sie / es.",
+    "bn": "যেসব verb du ও er / sie / es-এর সঙ্গে স্বরবর্ণ বদলায়।"
+   },
+   "blocks": [
+    {
+     "type": "text",
+     "en": "Irregular verbs change only in du and er / sie / es. ich, wir, ihr, sie / Sie stay regular.",
+     "bn": "অনিয়মিত verb শুধু du এবং er / sie / es-এ বদলায়। ich, wir, ihr, sie / Sie নিয়মিত থাকে।"
+    },
+    {
+     "type": "table",
+     "headers": [
+      "Change",
+      "Infinitive",
+      "du",
+      "er / sie / es"
+     ],
+     "rows": [
+      [
+       "e → i",
+       "sprechen",
+       "sprichst",
+       "spricht"
+      ],
+      [
+       "e → i",
+       "geben",
+       "gibst",
+       "gibt"
+      ],
+      [
+       "e → i",
+       "nehmen",
+       "nimmst",
+       "nimmt"
+      ],
+      [
+       "e → ie",
+       "sehen",
+       "siehst",
+       "sieht"
+      ],
+      [
+       "e → ie",
+       "lesen",
+       "liest",
+       "liest"
+      ],
+      [
+       "a → ä",
+       "fahren",
+       "fährst",
+       "fährt"
+      ],
+      [
+       "a → ä",
+       "schlafen",
+       "schläfst",
+       "schläft"
+      ],
+      [
+       "au → äu",
+       "laufen",
+       "läufst",
+       "läuft"
+      ]
+     ]
+    },
+    {
+     "type": "table",
+     "headers": [
+      "Person",
+      "sein",
+      "haben",
+      "werden",
+      "wissen"
+     ],
+     "rows": [
+      [
+       "ich",
+       "bin",
+       "habe",
+       "werde",
+       "weiß"
+      ],
+      [
+       "du",
+       "bist",
+       "hast",
+       "wirst",
+       "weißt"
+      ],
+      [
+       "er / sie / es",
+       "ist",
+       "hat",
+       "wird",
+       "weiß"
+      ],
+      [
+       "wir",
+       "sind",
+       "haben",
+       "werden",
+       "wissen"
+      ],
+      [
+       "ihr",
+       "seid",
+       "habt",
+       "werdet",
+       "wisst"
+      ],
+      [
+       "sie / Sie",
+       "sind",
+       "haben",
+       "werden",
+       "wissen"
+      ]
+     ],
+     "caption": {
+      "en": "Must-know verbs",
+      "bn": "অবশ্য জানা verb"
+     }
+    },
+    {
+     "type": "tip",
+     "en": "Keep your own list of irregular verbs and add the Partizip II next to each one.",
+     "bn": "নিজের অনিয়মিত verb-এর তালিকা রাখুন এবং প্রতিটির পাশে Partizip II লিখুন।"
+    }
+   ],
+   "quiz": [
+    {
+     "q": "er ___ (fahren)",
+     "options": [
+      "fahrt",
+      "fährt",
+      "fähret"
+     ],
+     "answer": 1,
+     "why": {
+      "en": "a → ä in er / sie / es.",
+      "bn": "er / sie / es-এ a → ä।"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sentence",
+   "level": "A1",
+   "icon": "reorder",
+   "title": {
+    "de": "Satzbau",
+    "en": "Sentence structure",
+    "bn": "বাক্যের গঠন"
+   },
+   "summary": {
+    "en": "Verb in position 2, questions, and verb at the end.",
+    "bn": "Verb দ্বিতীয় স্থানে, প্রশ্নের গঠন, আর বাক্যের শেষে verb।"
+   },
+   "blocks": [
+    {
+     "type": "text",
+     "en": "Golden rule: in a main clause the conjugated verb is always in position 2. The subject can be in position 1 or right after the verb.",
+     "bn": "সোনালি নিয়ম: main clause-এ conjugated verb সবসময় ২ নম্বর স্থানে। Subject ১ নম্বরে বা verb-এর ঠিক পরে বসতে পারে।"
+    },
+    {
+     "type": "table",
+     "headers": [
+      "Type",
+      "Pattern",
+      "Example"
+     ],
+     "rows": [
+      [
+       "Statement",
+       "1 · Verb · … ",
+       "Ich esse um 8 Uhr. / Heute esse ich."
+      ],
+      [
+       "W-question",
+       "W-word · Verb · Subject",
+       "Was isst du?"
+      ],
+      [
+       "Yes / No question",
+       "Verb · Subject · …",
+       "Isst du gern Fisch?"
+      ],
+      [
+       "und, aber, oder, denn",
+       "Do not change the order",
+       "Ich lerne, denn ich will arbeiten."
+      ],
+      [
+       "weil, dass, wenn",
+       "Verb goes to the end",
+       "Ich lerne, weil ich in Berlin arbeite."
+      ]
+     ]
+    },
+    {
+     "type": "tip",
+     "en": "With Perfekt or a modal verb, the second verb goes to the very end: Ich habe gestern gearbeitet. Ich muss heute arbeiten.",
+     "bn": "Perfekt বা modal verb থাকলে দ্বিতীয় verb একদম শেষে যায়: Ich habe gestern gearbeitet. Ich muss heute arbeiten।"
+    },
+    {
+     "type": "mistake",
+     "wrong": "Heute ich esse Pizza.",
+     "right": "Heute esse ich Pizza.",
+     "en": "If something else starts the sentence, the verb still stays in position 2.",
+     "bn": "অন্য কিছু দিয়ে বাক্য শুরু হলেও verb ২ নম্বরেই থাকে।"
+    }
+   ],
+   "quiz": [
+    {
+     "q": "Morgen ___ ins Kino.",
+     "options": [
+      "wir gehen",
+      "gehen wir",
+      "wir"
+     ],
+     "answer": 1,
+     "why": {
+      "en": "Morgen is position 1, verb must be position 2.",
+      "bn": "Morgen ১ নম্বরে, তাই verb ২ নম্বরে: gehen wir।"
+     }
+    }
+   ]
+  },
+  {
+   "id": "formal",
+   "level": "A1",
+   "icon": "handshake",
+   "title": {
+    "de": "Formell & Informell",
+    "en": "Formal & informal",
+    "bn": "আনুষ্ঠানিক ও অনানুষ্ঠানিক"
+   },
+   "summary": {
+    "en": "du or Sie: who to use which with.",
+    "bn": "du না Sie: কার সঙ্গে কোনটি।"
+   },
+   "blocks": [
+    {
+     "type": "text",
+     "en": "Use du with friends, family, children. Use Sie with strangers, older people, at work, in shops. Sie is always written with a capital S and uses the same verb form as sie (they).",
+     "bn": "বন্ধু, পরিবার ও শিশুদের সঙ্গে du। অপরিচিত, বয়স্ক, অফিস ও দোকানে Sie। Sie সবসময় বড় হাতের S দিয়ে লেখা হয় এবং verb-এর রূপ sie (তারা)-এর মতো।"
+    },
+    {
+     "type": "table",
+     "headers": [
+      "Informal (du)",
+      "Formal (Sie)"
+     ],
+     "rows": [
+      [
+       "Wie heißt du?",
+       "Wie heißen Sie?"
+      ],
+      [
+       "Wo wohnst du?",
+       "Wo wohnen Sie?"
+      ],
+      [
+       "Woher kommst du?",
+       "Woher kommen Sie?"
+      ],
+      [
+       "dein / dich / dir",
+       "Ihr / Sie / Ihnen"
+      ]
+     ]
+    },
+    {
+     "type": "tip",
+     "en": "When unsure, use Sie. People will offer you du when they are ready.",
+     "bn": "দ্বিধায় থাকলে Sie ব্যবহার করুন। অপর পক্ষ তৈরি হলে নিজেই du বলতে বলবে।"
+    }
+   ],
+   "quiz": [
+    {
+     "q": "___ Sie Herr Müller?",
+     "options": [
+      "Bist",
+      "Ist",
+      "Sind"
+     ],
+     "answer": 2,
+     "why": {
+      "en": "Sie takes the plural form: sind.",
+      "bn": "Sie-এর সঙ্গে plural রূপ: sind।"
+     }
+    }
+   ]
+  },
+  {
+   "id": "separable",
+   "level": "A1",
+   "icon": "call_split",
+   "title": {
+    "de": "Trennbare Verben",
+    "en": "Separable verbs",
+    "bn": "বিচ্ছেদযোগ্য ক্রিয়া"
+   },
+   "summary": {
+    "en": "The prefix jumps to the end of the sentence.",
+    "bn": "Prefix বাক্যের শেষে চলে যায়।"
+   },
+   "blocks": [
+    {
+     "type": "text",
+     "en": "A separable verb = prefix + verb. In a main clause the verb stays in position 2 and the prefix goes to the end. The prefix changes the meaning: kommen (come) → ankommen (arrive).",
+     "bn": "Separable verb = prefix + verb। Main clause-এ verb ২ নম্বরে থাকে আর prefix শেষে যায়। Prefix অর্থ বদলে দেয়: kommen (আসা) → ankommen (পৌঁছানো)।"
+    },
+    {
+     "type": "table",
+     "headers": [
+      "Prefix",
+      "Verb",
+      "Sentence"
+     ],
+     "rows": [
+      [
+       "auf",
+       "aufstehen",
+       "Ich stehe um 7 Uhr auf."
+      ],
+      [
+       "an",
+       "anrufen",
+       "Ich rufe dich an."
+      ],
+      [
+       "ein",
+       "einkaufen",
+       "Wir kaufen heute ein."
+      ],
+      [
+       "mit",
+       "mitkommen",
+       "Kommst du mit?"
+      ],
+      [
+       "ab",
+       "abfahren",
+       "Der Zug fährt um 9 Uhr ab."
+      ],
+      [
+       "zurück",
+       "zurückkommen",
+       "Er kommt morgen zurück."
+      ]
+     ]
+    },
+    {
+     "type": "text",
+     "en": "Common prefixes: ab, an, auf, aus, bei, ein, mit, nach, vor, weg, zu, zurück, her, hin, los, fern, fest.",
+     "bn": "প্রচলিত prefix: ab, an, auf, aus, bei, ein, mit, nach, vor, weg, zu, zurück, her, hin, los, fern, fest।"
+    },
+    {
+     "type": "tip",
+     "en": "With a modal verb or in a weil-clause the verb stays whole: Ich muss früh aufstehen. Ich lerne, weil ich früh aufstehe.",
+     "bn": "Modal verb বা weil-বাক্যে verb ভাঙে না: Ich muss früh aufstehen. Ich lerne, weil ich früh aufstehe।"
+    },
+    {
+     "type": "examples",
+     "items": [
+      {
+       "de": "Wann kommt der Zug an?",
+       "en": "When does the train arrive?",
+       "bn": "ট্রেন কখন পৌঁছায়?",
+       "mark": "an"
+      },
+      {
+       "de": "Ich habe dich angerufen.",
+       "en": "I called you.",
+       "bn": "আমি তোমাকে ফোন করেছি।",
+       "mark": "angerufen"
+      }
+     ]
+    }
+   ],
+   "quiz": [
+    {
+     "q": "Ich ___ um 7 Uhr auf. (aufstehen)",
+     "options": [
+      "stehe",
+      "aufstehe",
+      "stehen"
+     ],
+     "answer": 0,
+     "why": {
+      "en": "ich → stehe; the prefix auf goes to the end.",
+      "bn": "ich → stehe; prefix auf শেষে যায়।"
+     }
+    }
+   ]
+  },
+  {
+   "id": "inseparable",
+   "level": "A1",
+   "icon": "link",
+   "title": {
+    "de": "Untrennbare Präfixe",
+    "en": "Inseparable prefixes",
+    "bn": "অবিচ্ছেদ্য প্রিফিক্স"
+   },
+   "summary": {
+    "en": "Prefixes that never split off.",
+    "bn": "যে prefix কখনো আলাদা হয় না।"
+   },
+   "blocks": [
+    {
+     "type": "text",
+     "en": "These prefixes stay attached and are never stressed: be-, emp-, ent-, er-, ge-, miss-, ver-, zer-. Their Partizip II has no ge-.",
+     "bn": "এই prefix-গুলো verb-এর সঙ্গে লেগে থাকে: be-, emp-, ent-, er-, ge-, miss-, ver-, zer-। এদের Partizip II-এ ge- বসে না।"
+    },
+    {
+     "type": "table",
+     "headers": [
+      "Verb",
+      "Present",
+      "Perfekt"
+     ],
+     "rows": [
+      [
+       "besuchen",
+       "Ich besuche meine Oma.",
+       "Ich habe meine Oma besucht."
+      ],
+      [
+       "verstehen",
+       "Ich verstehe dich.",
+       "Ich habe dich verstanden."
+      ],
+      [
+       "bekommen",
+       "Er bekommt ein Geschenk.",
+       "Er hat ein Geschenk bekommen."
+      ],
+      [
+       "vergessen",
+       "Sie vergisst das Buch.",
+       "Sie hat das Buch vergessen."
+      ]
+     ]
+    },
+    {
+     "type": "text",
+     "en": "Mixed group: durch-, über-, um-, unter-, wieder- can be separable or inseparable depending on the verb and meaning. Check a dictionary.",
+     "bn": "মিশ্র দল: durch-, über-, um-, unter-, wieder- verb ও অর্থ অনুযায়ী separable বা inseparable হয়। অভিধানে দেখে নিন।"
+    },
+    {
+     "type": "mistake",
+     "wrong": "Ich habe dich geverstanden.",
+     "right": "Ich habe dich verstanden.",
+     "en": "No ge- with inseparable prefixes.",
+     "bn": "Inseparable prefix-এর সঙ্গে ge- বসে না।"
+    }
+   ],
+   "quiz": [
+    {
+     "q": "Partizip II of verstehen?",
+     "options": [
+      "geverstanden",
+      "verstanden",
+      "verstehen"
+     ],
+     "answer": 1,
+     "why": {
+      "en": "ver- is inseparable, so no ge-.",
+      "bn": "ver- inseparable, তাই ge- নেই।"
+     }
+    }
+   ]
+  },
+  {
+   "id": "modal",
+   "level": "A1",
+   "icon": "tune",
+   "title": {
+    "de": "Modalverben",
+    "en": "Modal verbs",
+    "bn": "মোডাল ক্রিয়া"
+   },
+   "summary": {
+    "en": "können, müssen, wollen, dürfen, sollen, mögen, möchten.",
+    "bn": "können, müssen, wollen, dürfen, sollen, mögen, möchten।"
+   },
+   "blocks": [
+    {
+     "type": "text",
+     "en": "The modal verb is conjugated and takes position 2. The main verb stays in the infinitive at the end.",
+     "bn": "Modal verb conjugate হয়ে ২ নম্বরে বসে। মূল verb infinitive রূপে শেষে থাকে।"
+    },
+    {
+     "type": "table",
+     "headers": [
+      "",
+      "können",
+      "müssen",
+      "wollen",
+      "dürfen",
+      "sollen",
+      "mögen",
+      "möchten"
+     ],
+     "rows": [
+      [
+       "ich",
+       "kann",
+       "muss",
+       "will",
+       "darf",
+       "soll",
+       "mag",
+       "möchte"
+      ],
+      [
+       "du",
+       "kannst",
+       "musst",
+       "willst",
+       "darfst",
+       "sollst",
+       "magst",
+       "möchtest"
+      ],
+      [
+       "er / sie / es",
+       "kann",
+       "muss",
+       "will",
+       "darf",
+       "soll",
+       "mag",
+       "möchte"
+      ],
+      [
+       "wir",
+       "können",
+       "müssen",
+       "wollen",
+       "dürfen",
+       "sollen",
+       "mögen",
+       "möchten"
+      ],
+      [
+       "ihr",
+       "könnt",
+       "müsst",
+       "wollt",
+       "dürft",
+       "sollt",
+       "mögt",
+       "möchtet"
+      ],
+      [
+       "sie / Sie",
+       "können",
+       "müssen",
+       "wollen",
+       "dürfen",
+       "sollen",
+       "mögen",
+       "möchten"
+      ]
+     ]
+    },
+    {
+     "type": "table",
+     "headers": [
+      "Verb",
+      "Meaning",
+      "bn"
+     ],
+     "rows": [
+      [
+       "können",
+       "can, be able to",
+       "পারা, সক্ষম হওয়া"
+      ],
+      [
+       "müssen",
+       "must, have to",
+       "করতেই হবে"
+      ],
+      [
+       "wollen",
+       "want to",
+       "চাওয়া, ইচ্ছা"
+      ],
+      [
+       "dürfen",
+       "be allowed to",
+       "অনুমতি আছে"
+      ],
+      [
+       "sollen",
+       "should, be supposed to",
+       "করা উচিত, অন্য কেউ চায়"
+      ],
+      [
+       "mögen",
+       "to like",
+       "পছন্দ করা"
+      ],
+      [
+       "möchten",
+       "would like to",
+       "চাইতাম, বিনীত ইচ্ছা"
+      ]
+     ]
+    },
+    {
+     "type": "examples",
+     "items": [
+      {
+       "de": "Du kannst gut schwimmen.",
+       "en": "You can swim well.",
+       "bn": "তুমি ভালো সাঁতার কাটতে পারো।",
+       "mark": "kannst"
+      },
+      {
+       "de": "Ich möchte einen Kaffee trinken.",
+       "en": "I would like to drink a coffee.",
+       "bn": "আমি একটি কফি খেতে চাই।",
+       "mark": "möchte"
+      }
+     ]
+    },
+    {
+     "type": "mistake",
+     "wrong": "Er muss nicht rauchen. (= he must not)",
+     "right": "Er darf nicht rauchen.",
+     "en": "müssen nicht = does not have to; nicht dürfen = is not allowed.",
+     "bn": "müssen nicht = দরকার নেই; nicht dürfen = নিষেধ।"
+    }
+   ],
+   "quiz": [
+    {
+     "q": "Du ___ hier nicht parken. (not allowed)",
+     "options": [
+      "musst",
+      "darfst",
+      "sollst"
+     ],
+     "answer": 1,
+     "why": {
+      "en": "nicht dürfen expresses a prohibition.",
+      "bn": "নিষেধ বোঝাতে nicht dürfen।"
+     }
+    }
+   ]
+  },
+  {
+   "id": "perfekt",
+   "level": "A1",
+   "icon": "history",
+   "title": {
+    "de": "Perfekt",
+    "en": "Present perfect",
+    "bn": "পার্ফেক্ট (অতীত)"
+   },
+   "summary": {
+    "en": "haben / sein + Partizip II at the end.",
+    "bn": "haben / sein + শেষে Partizip II।"
+   },
+   "blocks": [
+    {
+     "type": "text",
+     "en": "Perfekt is the main past tense in spoken German. Build it with haben or sein in position 2 and the Partizip II at the very end.",
+     "bn": "কথ্য জার্মানে অতীতের প্রধান কাল Perfekt। ২ নম্বরে haben বা sein আর একদম শেষে Partizip II বসান।"
+    },
+    {
+     "type": "table",
+     "headers": [
+      "Use sein when…",
+      "Use haben when…"
+     ],
+     "rows": [
+      [
+       "Movement: gehen, fahren, kommen, fliegen",
+       "Object in Akkusativ: machen, kaufen, sehen"
+      ],
+      [
+       "Change of state: aufstehen, einschlafen, wachsen",
+       "Reflexive verbs: sich duschen, sich freuen"
+      ],
+      [
+       "sein, werden, bleiben, passieren",
+       "Most other verbs (about 80%)"
+      ]
+     ]
+    },
+    {
+     "type": "examples",
+     "items": [
+      {
+       "de": "Ich habe gestern gearbeitet.",
+       "en": "I worked yesterday.",
+       "bn": "আমি গতকাল কাজ করেছি।",
+       "mark": "habe"
+      },
+      {
+       "de": "Wir sind nach Köln gefahren.",
+       "en": "We drove to Cologne.",
+       "bn": "আমরা কোলনে গিয়েছিলাম।",
+       "mark": "sind"
+      },
+      {
+       "de": "Hast du gestern Fußball gespielt?",
+       "en": "Did you play football yesterday?",
+       "bn": "তুমি কি গতকাল ফুটবল খেলেছিলে?",
+       "mark": "Hast"
+      }
+     ]
+    },
+    {
+     "type": "tip",
+     "en": "Yes / No question: haben or sein goes to position 1. W-question: W-word first, then haben / sein.",
+     "bn": "Yes / No প্রশ্নে haben বা sein ১ নম্বরে যায়। W-প্রশ্নে প্রথমে W-শব্দ, তারপর haben / sein।"
+    }
+   ],
+   "quiz": [
+    {
+     "q": "Ich ___ nach Berlin gefahren.",
+     "options": [
+      "habe",
+      "bin",
+      "war"
+     ],
+     "answer": 1,
+     "why": {
+      "en": "Movement verb, so sein.",
+      "bn": "চলাচলের verb, তাই sein।"
+     }
+    }
+   ]
+  },
+  {
+   "id": "partizip",
+   "level": "A1",
+   "icon": "construction",
+   "title": {
+    "de": "Partizip II",
+    "en": "Past participle",
+    "bn": "পাস্ট পার্টিসিপল"
+   },
+   "summary": {
+    "en": "How to form the Partizip II.",
+    "bn": "Partizip II কীভাবে বানাবেন।"
+   },
+   "blocks": [
+    {
+     "type": "table",
+     "headers": [
+      "Type",
+      "Pattern",
+      "Example"
+     ],
+     "rows": [
+      [
+       "Regular",
+       "ge + stem + t",
+       "machen → gemacht"
+      ],
+      [
+       "Stem ends -t/-d/-n/-m",
+       "ge + stem + et",
+       "arbeiten → gearbeitet"
+      ],
+      [
+       "-ieren verbs",
+       "stem + t (no ge)",
+       "studieren → studiert"
+      ],
+      [
+       "Irregular",
+       "ge + stem + en (vowel may change)",
+       "sehen → gesehen · schreiben → geschrieben"
+      ],
+      [
+       "Separable",
+       "prefix + ge + stem",
+       "aufmachen → aufgemacht · anrufen → angerufen"
+      ],
+      [
+       "Inseparable",
+       "no ge",
+       "besuchen → besucht · vergessen → vergessen"
+      ],
+      [
+       "Mixed",
+       "ge + changed stem + t",
+       "bringen → gebracht · denken → gedacht · wissen → gewusst"
+      ]
+     ]
+    },
+    {
+     "type": "tip",
+     "en": "Irregular participles must be memorised. Learn them as a triple: gehen – ging – gegangen.",
+     "bn": "অনিয়মিত participle মুখস্থ করতে হয়। তিনটি রূপ একসঙ্গে শিখুন: gehen – ging – gegangen।"
+    }
+   ],
+   "quiz": [
+    {
+     "q": "Partizip II of aufmachen?",
+     "options": [
+      "gemacht",
+      "aufgemacht",
+      "geaufmacht"
+     ],
+     "answer": 1,
+     "why": {
+      "en": "Separable: prefix + ge + stem + t.",
+      "bn": "Separable: prefix + ge + stem + t।"
+     }
+    }
+   ]
+  },
+  {
+   "id": "time",
+   "level": "A1",
+   "icon": "access_time",
+   "title": {
+    "de": "Zeit-Präpositionen & Adverbien",
+    "en": "Time prepositions & adverbs",
+    "bn": "সময়ের প্রিপজিশন ও ক্রিয়াবিশেষণ"
+   },
+   "summary": {
+    "en": "um, am, im, von…bis, ab, seit and how often.",
+    "bn": "um, am, im, von…bis, ab, seit এবং কতবার।"
+   },
+   "blocks": [
+    {
+     "type": "table",
+     "headers": [
+      "Word",
+      "Used with",
+      "Example"
+     ],
+     "rows": [
+      [
+       "um",
+       "clock time",
+       "Der Kurs beginnt um 8 Uhr."
+      ],
+      [
+       "am",
+       "day, part of day, weekend",
+       "Am Montag · Am Morgen · Am Wochenende"
+      ],
+      [
+       "im",
+       "month, season",
+       "Im Juli · Im Winter"
+      ],
+      [
+       "von … bis",
+       "duration",
+       "Von 7 bis 9 Uhr spielt er Tennis."
+      ],
+      [
+       "ab",
+       "starting point",
+       "Ab 12 Uhr schlafe ich."
+      ],
+      [
+       "seit",
+       "since (still going on)",
+       "Er lernt seit zwei Jahren Deutsch."
+      ],
+      [
+       "vor",
+       "ago",
+       "Vor einer Woche war ich in Wien."
+      ],
+      [
+       "in",
+       "from now",
+       "In zwei Tagen fahre ich ab."
+      ]
+     ]
+    },
+    {
+     "type": "table",
+     "headers": [
+      "nie",
+      "fast nie",
+      "selten",
+      "manchmal",
+      "oft",
+      "meistens",
+      "fast immer",
+      "immer"
+     ],
+     "rows": [
+      [
+       "never",
+       "almost never",
+       "rarely",
+       "sometimes",
+       "often",
+       "mostly",
+       "almost always",
+       "always"
+      ],
+      [
+       "কখনো না",
+       "প্রায় কখনো না",
+       "কদাচিৎ",
+       "মাঝে মাঝে",
+       "প্রায়ই",
+       "বেশির ভাগ সময়",
+       "প্রায় সবসময়",
+       "সবসময়"
+      ]
+     ],
+     "caption": {
+      "en": "Frequency · 0% → 100%",
+      "bn": "কতবার · ০% → ১০০%"
+     }
+    },
+    {
+     "type": "tip",
+     "en": "Exception: in der Nacht (not 'am Nacht'). Frequency adverbs usually come right after the verb: Ich gehe oft joggen.",
+     "bn": "ব্যতিক্রম: in der Nacht ('am Nacht' নয়)। Frequency adverb সাধারণত verb-এর ঠিক পরে বসে: Ich gehe oft joggen।"
+    }
+   ],
+   "quiz": [
+    {
+     "q": "___ Dienstag arbeite ich zu Hause.",
+     "options": [
+      "Um",
+      "Am",
+      "Im"
+     ],
+     "answer": 1,
+     "why": {
+      "en": "Days take am.",
+      "bn": "বারের নামের আগে am।"
+     }
+    }
+   ]
+  },
+  {
+   "id": "negation",
+   "level": "A1",
+   "icon": "block",
+   "title": {
+    "de": "Negation: nicht & kein",
+    "en": "Negation: nicht & kein",
+    "bn": "না-বাচক: nicht ও kein"
+   },
+   "summary": {
+    "en": "When to use nicht and when kein.",
+    "bn": "কখন nicht আর কখন kein।"
+   },
+   "blocks": [
+    {
+     "type": "table",
+     "headers": [
+      "Use",
+      "For",
+      "Example"
+     ],
+     "rows": [
+      [
+       "kein",
+       "noun with ein / no article",
+       "Ich habe ein Auto. → Ich habe kein Auto. · Ich habe Zeit. → Ich habe keine Zeit."
+      ],
+      [
+       "nicht",
+       "verb, adjective, adverb, noun with der / mein",
+       "Ich arbeite nicht. · Das ist nicht gut. · Ich kenne den Mann nicht."
+      ]
+     ]
+    },
+    {
+     "type": "table",
+     "headers": [
+      "",
+      "Nom.",
+      "Akk."
+     ],
+     "rows": [
+      [
+       "m",
+       "kein",
+       "keinen"
+      ],
+      [
+       "f",
+       "keine",
+       "keine"
+      ],
+      [
+       "n",
+       "kein",
+       "kein"
+      ],
+      [
+       "pl",
+       "keine",
+       "keine"
+      ]
+     ],
+     "caption": {
+      "en": "kein declines like ein",
+      "bn": "kein-এর রূপ ein-এর মতো"
+     }
+    },
+    {
+     "type": "mistake",
+     "wrong": "Ich habe nicht Hunger.",
+     "right": "Ich habe keinen Hunger.",
+     "en": "Hunger has no article, so use kein.",
+     "bn": "Hunger-এর আগে আর্টিকেল নেই, তাই kein।"
+    }
+   ],
+   "quiz": [
+    {
+     "q": "Ich habe ___ Hunger.",
+     "options": [
+      "nicht",
+      "kein",
+      "keinen"
+     ],
+     "answer": 2,
+     "why": {
+      "en": "Hunger is masculine, Akkusativ: keinen.",
+      "bn": "Hunger masculine, Akkusativ: keinen।"
+     }
+    }
+   ]
+  },
+  {
+   "id": "comparison",
+   "level": "A2",
+   "icon": "trending_up",
+   "title": {
+    "de": "Komparativ & Superlativ",
+    "en": "Comparative & superlative",
+    "bn": "তুলনা: Komparativ ও Superlativ"
+   },
+   "summary": {
+    "en": "schnell – schneller – am schnellsten.",
+    "bn": "schnell – schneller – am schnellsten।"
+   },
+   "blocks": [
+    {
+     "type": "text",
+     "en": "Comparative: adjective + -er. Superlative: am + adjective + -sten. Many short adjectives with a, o, u also get an umlaut.",
+     "bn": "Komparativ: adjective + -er। Superlativ: am + adjective + -sten। a, o, u-যুক্ত ছোট adjective-এ প্রায়ই umlaut বসে।"
+    },
+    {
+     "type": "table",
+     "headers": [
+      "Base",
+      "Comparative",
+      "Superlative"
+     ],
+     "rows": [
+      [
+       "schnell",
+       "schneller",
+       "am schnellsten"
+      ],
+      [
+       "alt",
+       "älter",
+       "am ältesten"
+      ],
+      [
+       "groß",
+       "größer",
+       "am größten"
+      ],
+      [
+       "jung",
+       "jünger",
+       "am jüngsten"
+      ],
+      [
+       "gut",
+       "besser",
+       "am besten"
+      ],
+      [
+       "viel",
+       "mehr",
+       "am meisten"
+      ],
+      [
+       "gern",
+       "lieber",
+       "am liebsten"
+      ],
+      [
+       "hoch",
+       "höher",
+       "am höchsten"
+      ]
+     ]
+    },
+    {
+     "type": "table",
+     "headers": [
+      "Comparison",
+      "Pattern",
+      "Example"
+     ],
+     "rows": [
+      [
+       "Different",
+       "Comparative + als",
+       "Berlin ist größer als Hamburg."
+      ],
+      [
+       "Equal",
+       "so + base + wie",
+       "Er ist so groß wie ich."
+      ]
+     ]
+    },
+    {
+     "type": "mistake",
+     "wrong": "größer wie",
+     "right": "größer als",
+     "en": "After a comparative always use als.",
+     "bn": "Comparative-এর পরে সবসময় als।"
+    },
+    {
+     "type": "tip",
+     "en": "Before a noun the comparative takes adjective endings: ein schnellerer Zug (B1).",
+     "bn": "Noun-এর আগে comparative-এ adjective ending বসে: ein schnellerer Zug (B1)।"
+    }
+   ],
+   "quiz": [
+    {
+     "q": "Berlin ist ___ als Hamburg. (groß)",
+     "options": [
+      "großer",
+      "größer",
+      "am größten"
+     ],
+     "answer": 1,
+     "why": {
+      "en": "Comparative with umlaut + als.",
+      "bn": "Umlaut সহ comparative + als।"
+     }
+    }
+   ]
+  }
+ ]
+}
