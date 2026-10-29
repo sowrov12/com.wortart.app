@@ -5,7 +5,7 @@ import com.wortart.app.data.local.entity.VocabEntity
 import com.wortart.app.data.local.entity.WordCategories
 import kotlin.random.Random
 
-enum class QuestionType { AUXILIARY, PREFIX }
+enum class QuestionType { AUXILIARY, PREFIX, QUIZ }
 
 /** A multiple-choice question shown under a flashcard. */
 data class ChoiceQuestion(
