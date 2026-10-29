@@ -6,6 +6,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.wortart.app.data.auth.AuthRepository
 import com.wortart.app.data.auth.FirebaseAuthRepository
 import com.wortart.app.data.auth.UnconfiguredAuthRepository
+import com.wortart.app.data.lessons.AssetLessonsRepository
+import com.wortart.app.data.lessons.LessonsRepository
 import com.wortart.app.data.local.LocalDataResetter
 import com.wortart.app.data.local.WortArtDatabase
 import com.wortart.app.data.membership.MembershipRepository
@@ -74,6 +76,8 @@ class WortArtApp : Application() {
             UnconfiguredAdminRepository
         }
     }
+
+    val lessonsRepository: LessonsRepository by lazy { AssetLessonsRepository(this) }
 
     val membershipRepository: MembershipRepository by lazy {
         MembershipRepository(authRepository, userRepository, appScope)
