@@ -3,7 +3,7 @@ package com.wortart.app.domain.rules
 import com.wortart.app.data.local.entity.VocabEntity
 
 /** An example sentence in German with English and Bengali translations. */
-data class RuleExample(val de: String, val en: String, val bn: String)
+data class RuleExample(val de: String, val en: String, val bn: String, val mark: String? = null)
 
 /** One piece of content inside an expandable rule section. */
 sealed interface RuleBlock {
