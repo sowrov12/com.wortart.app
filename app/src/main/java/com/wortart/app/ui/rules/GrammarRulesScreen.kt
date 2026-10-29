@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -37,28 +38,37 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wortart.app.domain.rules.RuleBlock
 import com.wortart.app.domain.rules.RuleSection
+import com.wortart.app.domain.rules.lessons.articleOf
 import com.wortart.app.ui.theme.WortArtColors
 
-/** Connects [GrammarRulesScreen] to its [RulesViewModel]. */
-@Composable
-fun GrammarRulesRoute(viewModel: RulesViewModel, modifier: Modifier = Modifier) {
-    val sections by viewModel.sections.collectAsStateWithLifecycle()
-    GrammarRulesScreen(sections = sections, modifier = modifier)
-}
+/**
+ * Colors for der / die / das (keys "der", "die", "das"). The lessons screen provides the colors
+ * from grammar_rules.json; without them nothing is colored.
+ */
+val LocalGenderColors = compositionLocalOf<Map<String, Color>> { emptyMap() }
 
 /**
- * Quick-reference grammar rules as expandable cards. One card is open at a time,
- * which keeps the screen short on a phone. Stateless apart from the open card.
+ * The reference tables as expandable cards. One card is open at a time, which keeps the
+ * screen short on a phone. Stateless apart from the open card.
+ *
+ * @param showHeader false when a parent screen already shows the "Grammar Rules" title.
  */
 @Composable
-fun GrammarRulesScreen(sections: List<RuleSection>, modifier: Modifier = Modifier) {
+fun GrammarRulesScreen(
+    sections: List<RuleSection>,
+    modifier: Modifier = Modifier,
+    showHeader: Boolean = true,
+) {
     var expandedId by rememberSaveable { mutableStateOf<String?>(null) }
 
     LazyColumn(
@@ -68,19 +78,21 @@ fun GrammarRulesScreen(sections: List<RuleSection>, modifier: Modifier = Modifie
         verticalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp),
     ) {
-        item {
-            Column {
-                Text(
-                    text = "Grammar Rules",
-                    color = WortArtColors.TextPrimary,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = "Quick reference for A1–B2 learners",
-                    color = WortArtColors.TextSecondary,
-                    fontSize = 14.sp,
-                )
+        if (showHeader) {
+            item {
+                Column {
+                    Text(
+                        text = "Grammar Rules",
+                        color = WortArtColors.TextPrimary,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = "Quick reference for A1–B2 learners",
+                        color = WortArtColors.TextSecondary,
+                        fontSize = 14.sp,
+                    )
+                }
             }
         }
         items(sections, key = { it.id }) { section ->
@@ -188,8 +200,9 @@ private fun BulletListView(items: List<String>) {
     }
 }
 
+/** A table with a header row. Wide tables scroll sideways. Used by the reference and the lessons. */
 @Composable
-private fun RuleTableView(table: RuleBlock.Table) {
+internal fun RuleTableView(table: RuleBlock.Table) {
     val cellWidth = when {
         table.headers.size >= 5 -> 92.dp
         table.headers.size == 4 -> 104.dp
@@ -205,7 +218,6 @@ private fun RuleTableView(table: RuleBlock.Table) {
                 fontWeight = FontWeight.SemiBold,
             )
         }
-        // Wide tables scroll sideways inside their own container.
         Column(
             modifier = Modifier
                 .clip(RoundedCornerShape(12.dp))
@@ -231,17 +243,22 @@ private fun RuleTableView(table: RuleBlock.Table) {
 
 @Composable
 private fun RuleTableRow(cells: List<String>, cellWidth: Dp, isHeader: Boolean, background: Color) {
+    val genderColors = LocalGenderColors.current
+
     Row(modifier = Modifier.background(background)) {
         cells.forEachIndexed { index, cell ->
+            // Cells that start with der / die / das get the gender color.
+            val genderColor = if (isHeader) null else articleOf(cell)?.let { genderColors[it] }
             Text(
                 text = cell,
                 color = when {
                     isHeader -> WortArtColors.Gold
+                    genderColor != null -> genderColor
                     index == 0 -> WortArtColors.TextPrimary
                     else -> WortArtColors.TextSecondary
                 },
                 fontSize = 14.sp,
-                fontWeight = if (isHeader || index == 0) FontWeight.SemiBold else FontWeight.Normal,
+                fontWeight = if (isHeader || index == 0 || genderColor != null) FontWeight.SemiBold else FontWeight.Normal,
                 modifier = Modifier
                     .width(cellWidth)
                     .padding(horizontal = 10.dp, vertical = 8.dp),
@@ -250,8 +267,11 @@ private fun RuleTableRow(cells: List<String>, cellWidth: Dp, isHeader: Boolean, 
     }
 }
 
+/** Example sentences with their English and Bengali translations; `mark` is highlighted. */
 @Composable
-private fun ExampleListView(block: RuleBlock.ExampleList) {
+internal fun ExampleListView(block: RuleBlock.ExampleList) {
+    val genderColors = LocalGenderColors.current
+
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         block.title?.let { title ->
             Text(
@@ -262,6 +282,7 @@ private fun ExampleListView(block: RuleBlock.ExampleList) {
             )
         }
         block.examples.forEach { example ->
+            val markColor = example.mark?.let { articleOf(it) }?.let { genderColors[it] } ?: WortArtColors.Gold
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -269,10 +290,26 @@ private fun ExampleListView(block: RuleBlock.ExampleList) {
                     .padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Text(text = example.de, color = WortArtColors.TextPrimary, fontSize = 16.sp)
+                Text(
+                    text = markedText(example.de, example.mark, markColor),
+                    color = WortArtColors.TextPrimary,
+                    fontSize = 16.sp,
+                )
                 Text(text = example.en, color = WortArtColors.TextSecondary, fontSize = 14.sp)
                 Text(text = example.bn, color = WortArtColors.GoldLight, fontSize = 14.sp)
             }
         }
+    }
+}
+
+/** [text] with the first occurrence of [mark] in bold [color]. The full text is unchanged. */
+private fun markedText(text: String, mark: String?, color: Color): AnnotatedString = buildAnnotatedString {
+    val start = if (mark.isNullOrEmpty()) -1 else text.indexOf(mark)
+    if (start < 0 || mark == null) {
+        append(text)
+    } else {
+        append(text.substring(0, start))
+        withStyle(SpanStyle(color = color, fontWeight = FontWeight.Bold)) { append(mark) }
+        append(text.substring(start + mark.length))
     }
 }
