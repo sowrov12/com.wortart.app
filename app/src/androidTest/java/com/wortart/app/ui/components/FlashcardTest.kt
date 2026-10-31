@@ -1,7 +1,5 @@
 package com.wortart.app.ui.components
 
-import androidx.compose.material3.Text
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -42,18 +40,16 @@ class FlashcardTest {
     )
 
     @Test
-    fun showsAllCardInformation() {
+    fun showsBadgesWordMeaningAndExample() {
         composeRule.setContent {
-            WortArtTheme {
-                FlashcardView(card = gehen, onSpeak = {}, onToggleFavorite = {})
-            }
+            WortArtTheme { FlashcardView(card = gehen, onSpeak = {}) }
         }
 
         composeRule.onNodeWithText("gehen").assertIsDisplayed()
         composeRule.onNodeWithText("A1").assertIsDisplayed()
         composeRule.onNodeWithText("Verb | Irregular").assertIsDisplayed()
-        composeRule.onNodeWithText("to go; to walk").assertExists()
-        composeRule.onNodeWithText("যাওয়া; হাঁটা").assertExists()
+        // First meaning of each language, on one line.
+        composeRule.onNodeWithText("to go / যাওয়া").assertExists()
         composeRule.onNodeWithText("Ich gehe jeden Morgen zur Arbeit.").assertExists()
         composeRule.onNodeWithText("I go to work every morning.").assertExists()
         composeRule.onNodeWithText("আমি প্রতিদিন সকালে কাজে যাই।").assertExists()
@@ -63,9 +59,7 @@ class FlashcardTest {
     fun audioButtonInvokesCallback() {
         var speakCount = 0
         composeRule.setContent {
-            WortArtTheme {
-                FlashcardView(card = gehen, onSpeak = { speakCount++ }, onToggleFavorite = {})
-            }
+            WortArtTheme { FlashcardView(card = gehen, onSpeak = { speakCount++ }) }
         }
 
         composeRule.onNodeWithContentDescription("Play pronunciation of gehen").performClick()
@@ -74,41 +68,14 @@ class FlashcardTest {
     }
 
     @Test
-    fun favoriteButtonTogglesAndReflectsState() {
-        val card = mutableStateOf(gehen)
+    fun theLevelBadgeShowsEveryLevel() {
         composeRule.setContent {
             WortArtTheme {
-                FlashcardView(
-                    card = card.value,
-                    onSpeak = {},
-                    onToggleFavorite = {
-                        card.value = card.value.copy(isFavorite = !card.value.isFavorite)
-                    },
-                )
+                FlashcardView(card = gehen.copy(level = CefrLevels.B2), onSpeak = {})
             }
         }
 
-        composeRule.onNodeWithContentDescription("Add to favorites").performClick()
-        composeRule.onNodeWithContentDescription("Remove from favorites").assertExists()
-
-        composeRule.onNodeWithContentDescription("Remove from favorites").performClick()
-        composeRule.onNodeWithContentDescription("Add to favorites").assertExists()
-    }
-
-    @Test
-    fun choiceContentSlotIsRendered() {
-        composeRule.setContent {
-            WortArtTheme {
-                FlashcardView(
-                    card = gehen,
-                    onSpeak = {},
-                    onToggleFavorite = {},
-                    choiceContent = { Text("slot-content") },
-                )
-            }
-        }
-
-        composeRule.onNodeWithText("slot-content").assertExists()
+        composeRule.onNodeWithText("B2").assertIsDisplayed()
     }
 
     @Test
