@@ -1,6 +1,10 @@
 package com.wortart.app.ui
 
 import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -8,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.wortart.app.ui.theme.WortArtTheme
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,26 +23,36 @@ class MainScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    @Test
-    fun practiceIsShownFirstAndTabsSwitchContent() {
+    private fun show(initial: MainTab = MainTab.Home, onTab: (MainTab) -> Unit = {}) {
         composeRule.setContent {
             WortArtTheme {
+                var selected by remember { mutableStateOf(initial) }
                 MainScreen(
-                    practice = { Text("practice-content") },
+                    selectedTab = selected,
+                    onSelectTab = {
+                        selected = it
+                        onTab(it)
+                    },
+                    home = { Text("home-content") },
                     explore = { Text("explore-content") },
                     rules = { Text("rules-content") },
                     stats = { Text("stats-content") },
-                    members = { Text("members-content") },
+                    profile = { Text("profile-content") },
                 )
             }
         }
+    }
 
-        composeRule.onNodeWithText("practice-content").assertExists()
+    @Test
+    fun homeIsShownFirstAndTabsSwitchContent() {
+        show()
+
+        composeRule.onNodeWithText("home-content").assertExists()
         composeRule.onNodeWithText("explore-content").assertDoesNotExist()
 
         composeRule.onNodeWithText("Explore").performClick()
         composeRule.onNodeWithText("explore-content").assertExists()
-        composeRule.onNodeWithText("practice-content").assertDoesNotExist()
+        composeRule.onNodeWithText("home-content").assertDoesNotExist()
 
         composeRule.onNodeWithText("Rules").performClick()
         composeRule.onNodeWithText("rules-content").assertExists()
@@ -47,11 +62,30 @@ class MainScreenTest {
         composeRule.onNodeWithText("stats-content").assertExists()
         composeRule.onNodeWithText("rules-content").assertDoesNotExist()
 
-        composeRule.onNodeWithText("Members").performClick()
-        composeRule.onNodeWithText("members-content").assertExists()
+        composeRule.onNodeWithText("Profile").performClick()
+        composeRule.onNodeWithText("profile-content").assertExists()
         composeRule.onNodeWithText("stats-content").assertDoesNotExist()
 
-        composeRule.onNodeWithText("Practice").performClick()
-        composeRule.onNodeWithText("practice-content").assertExists()
+        composeRule.onNodeWithText("Home").performClick()
+        composeRule.onNodeWithText("home-content").assertExists()
+    }
+
+    @Test
+    fun theCallerCanStartOnAnyTab() {
+        show(initial = MainTab.Stats)
+
+        composeRule.onNodeWithText("stats-content").assertExists()
+        composeRule.onNodeWithText("home-content").assertDoesNotExist()
+    }
+
+    @Test
+    fun selectingATabReportsIt() {
+        val picked = mutableListOf<MainTab>()
+        show(onTab = { picked += it })
+
+        composeRule.onNodeWithText("Rules").performClick()
+        composeRule.onNodeWithText("Profile").performClick()
+
+        composeRule.runOnIdle { assertEquals(listOf(MainTab.Rules, MainTab.Profile), picked) }
     }
 }
