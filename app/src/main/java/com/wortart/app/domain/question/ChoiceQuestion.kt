@@ -5,9 +5,9 @@ import com.wortart.app.data.local.entity.VocabEntity
 import com.wortart.app.data.local.entity.WordCategories
 import kotlin.random.Random
 
-enum class QuestionType { AUXILIARY, PREFIX, QUIZ }
+enum class QuestionType { AUXILIARY, PREFIX, MEANING, QUIZ }
 
-/** A multiple-choice question shown under a flashcard. */
+/** A multiple-choice question shown with a flashcard. */
 data class ChoiceQuestion(
     val type: QuestionType,
     val prompt: String,
@@ -17,11 +17,16 @@ data class ChoiceQuestion(
     val explanation: String,
 )
 
+/** English and Bengali meaning on one line, e.g. "to shop / কিনতে যাওয়া" (first meaning of each). */
+fun VocabEntity.shortMeaning(): String =
+    "${translationEn.substringBefore(';').trim()} / ${translationBn.substringBefore(';').trim()}"
+
 /**
- * Builds the choice question for a card:
+ * Builds the question for a card:
  * - regular / irregular verbs: haben or sein
  * - separable verbs: pick the separable prefix
- * - other word types: no question yet (returns null)
+ * - adjectives and adverbs: pick the correct meaning among meanings of similar words
+ * - other word types: no question (returns null)
  */
 object ChoiceQuestionBuilder {
 
@@ -30,12 +35,19 @@ object ChoiceQuestionBuilder {
     )
 
     private const val PREFIX_OPTION_COUNT = 4
+    private const val MEANING_OPTION_COUNT = 4
 
-    fun build(card: VocabEntity): ChoiceQuestion? = when (card.category) {
-        WordCategories.REGULAR_VERB, WordCategories.IRREGULAR_VERB -> auxiliaryQuestion(card)
-        WordCategories.SEPARABLE_VERB -> prefixQuestion(card)
-        else -> null
-    }
+    /**
+     * @param pool other words that can supply wrong answers for meaning questions
+     *   (words of the same category are used). Not needed for verbs.
+     */
+    fun build(card: VocabEntity, pool: List<VocabEntity> = emptyList()): ChoiceQuestion? =
+        when (card.category) {
+            WordCategories.REGULAR_VERB, WordCategories.IRREGULAR_VERB -> auxiliaryQuestion(card)
+            WordCategories.SEPARABLE_VERB -> prefixQuestion(card)
+            WordCategories.ADJECTIVE, WordCategories.ADVERB -> meaningQuestion(card, pool)
+            else -> null
+        }
 
     private fun auxiliaryQuestion(card: VocabEntity): ChoiceQuestion? {
         val auxiliary = card.auxiliary
@@ -43,7 +55,7 @@ object ChoiceQuestionBuilder {
 
         return ChoiceQuestion(
             type = QuestionType.AUXILIARY,
-            prompt = "Which auxiliary verb does “${card.word}” use in the Perfekt?",
+            prompt = "Which auxiliary verb is correct?",
             options = listOf(Auxiliaries.HABEN, Auxiliaries.SEIN),
             correctAnswer = auxiliary,
             explanation = perfektExplanation(card, auxiliary),
@@ -70,10 +82,32 @@ object ChoiceQuestionBuilder {
 
         return ChoiceQuestion(
             type = QuestionType.PREFIX,
-            prompt = "What is the separable prefix of “${card.word}”?",
+            prompt = "Select the separable prefix:",
             options = options,
             correctAnswer = prefix,
             explanation = explanation,
+        )
+    }
+
+    private fun meaningQuestion(card: VocabEntity, pool: List<VocabEntity>): ChoiceQuestion? {
+        val correct = card.shortMeaning()
+
+        val random = Random(card.id.hashCode())
+        val distractors = pool
+            .filter { it.category == card.category && it.id != card.id }
+            .map { it.shortMeaning() }
+            .filter { it != correct }
+            .distinct()
+            .shuffled(random)
+            .take(MEANING_OPTION_COUNT - 1)
+        if (distractors.isEmpty()) return null
+
+        return ChoiceQuestion(
+            type = QuestionType.MEANING,
+            prompt = "What is the correct meaning?",
+            options = (distractors + correct).shuffled(random),
+            correctAnswer = correct,
+            explanation = "${card.word} = ${card.translationEn} / ${card.translationBn}",
         )
     }
 
