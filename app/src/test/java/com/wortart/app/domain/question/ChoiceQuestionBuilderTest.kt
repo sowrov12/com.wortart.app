@@ -3,6 +3,7 @@ package com.wortart.app.domain.question
 import com.wortart.app.data.local.entity.VocabEntity
 import com.wortart.app.data.local.entity.WordCategories
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -88,10 +89,73 @@ class ChoiceQuestionBuilderTest {
         }
     }
 
+    private fun word(id: String, word: String, category: String, en: String, bn: String) = card(id, word, category)
+        .copy(translationEn = en, translationBn = bn)
+
+    private val adjectivePool = listOf(
+        word("a1", "schnell", WordCategories.ADJECTIVE, "fast; quick", "দ্রুত"),
+        word("a2", "langsam", WordCategories.ADJECTIVE, "slow", "ধীর"),
+        word("a3", "groß", WordCategories.ADJECTIVE, "big; tall", "বড়; লম্বা"),
+        word("a4", "schön", WordCategories.ADJECTIVE, "beautiful", "সুন্দর"),
+        word("a5", "klein", WordCategories.ADJECTIVE, "small", "ছোট"),
+        word("d1", "oft", WordCategories.ADVERB, "often", "প্রায়ই"),
+    )
+
     @Test
-    fun adjectivesAndAdverbsHaveNoQuestionYet() {
-        assertNull(ChoiceQuestionBuilder.build(card("a1", "schnell", WordCategories.ADJECTIVE)))
-        assertNull(ChoiceQuestionBuilder.build(card("d1", "oft", WordCategories.ADVERB)))
+    fun adjectiveAsksForTheMeaningAmongSimilarWords() {
+        val question = ChoiceQuestionBuilder.build(adjectivePool[0], adjectivePool)!!
+
+        assertEquals(QuestionType.MEANING, question.type)
+        assertEquals("What is the correct meaning?", question.prompt)
+        assertEquals("fast / দ্রুত", question.correctAnswer)
+        assertEquals(4, question.options.size)
+        assertEquals(4, question.options.toSet().size)
+        assertTrue("fast / দ্রুত" in question.options)
+        assertEquals("schnell = fast; quick / দ্রুত", question.explanation)
+    }
+
+    @Test
+    fun wrongMeaningsComeFromWordsOfTheSameCategoryOnly() {
+        val question = ChoiceQuestionBuilder.build(adjectivePool[0], adjectivePool)!!
+
+        assertFalse("often / প্রায়ই" in question.options)
+    }
+
+    @Test
+    fun meaningOptionsAreStableForTheSameCard() {
+        val adjective = adjectivePool[2]
+
+        assertEquals(
+            ChoiceQuestionBuilder.build(adjective, adjectivePool),
+            ChoiceQuestionBuilder.build(adjective, adjectivePool),
+        )
+    }
+
+    @Test
+    fun adverbsGetMeaningQuestionsToo() {
+        val adverbs = listOf(
+            word("d1", "oft", WordCategories.ADVERB, "often", "প্রায়ই"),
+            word("d2", "immer", WordCategories.ADVERB, "always", "সবসময়"),
+            word("d3", "hier", WordCategories.ADVERB, "here", "এখানে"),
+        )
+
+        val question = ChoiceQuestionBuilder.build(adverbs[0], adverbs)!!
+
+        assertEquals(QuestionType.MEANING, question.type)
+        assertEquals("often / প্রায়ই", question.correctAnswer)
+        assertEquals(3, question.options.size)
+    }
+
+    @Test
+    fun withoutOtherWordsThereIsNoMeaningQuestion() {
+        assertNull(ChoiceQuestionBuilder.build(adjectivePool[0]))
+        assertNull(ChoiceQuestionBuilder.build(adjectivePool[0], listOf(adjectivePool[0])))
+    }
+
+    @Test
+    fun theShortMeaningUsesTheFirstMeaningOfEachLanguage() {
+        assertEquals("to go / যাওয়া", card("v1", "gehen", WordCategories.IRREGULAR_VERB)
+            .copy(translationEn = "to go; to walk", translationBn = "যাওয়া; হাঁটা").shortMeaning())
     }
 
     @Test
