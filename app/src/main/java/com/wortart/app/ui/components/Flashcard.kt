@@ -1,7 +1,6 @@
 package com.wortart.app.ui.components
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -9,17 +8,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -32,7 +28,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -46,101 +41,76 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wortart.app.data.local.entity.VocabEntity
+import com.wortart.app.domain.question.shortMeaning
 import com.wortart.app.ui.theme.WortArtColors
+import com.wortart.app.ui.theme.WortArtFonts
+import com.wortart.app.ui.theme.levelColor
 
 /**
- * A vocabulary flashcard in the dark-gold style.
+ * A vocabulary flashcard: level badge and grammar tag, the German word in serif type with an
+ * audio button, the meaning in English and Bengali on one line, and an example sentence.
  *
- * Shows the German word, audio button, CEFR level badge, grammar tag, English and
- * Bengali translations, and an example sentence with translations.
+ * Stateless. The answer buttons are shown by the screen below the card.
  *
- * This composable is stateless: favorites and audio are handled through callbacks.
- *
- * @param onSpeak called when the audio button is tapped (Task 2.3 connects TextToSpeech).
- * @param isSpeaking highlights the audio button while pronunciation is playing.
- * @param choiceContent optional slot below the example, used by Task 2.2 for the
- *   haben/sein and prefix option buttons.
+ * @param onSpeak called when the audio button is tapped.
+ * @param isSpeaking fills the audio button while pronunciation is playing.
  */
 @Composable
 fun FlashcardView(
     card: VocabEntity,
     onSpeak: () -> Unit,
-    onToggleFavorite: () -> Unit,
     modifier: Modifier = Modifier,
     isSpeaking: Boolean = false,
-    choiceContent: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
-    val shape = RoundedCornerShape(28.dp)
+    val shape = RoundedCornerShape(20.dp)
 
     Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .shadow(
-                elevation = 16.dp,
-                shape = shape,
-                ambientColor = WortArtColors.Gold.copy(alpha = 0.25f),
-                spotColor = WortArtColors.Gold.copy(alpha = 0.25f),
-            ),
+        modifier = modifier.fillMaxWidth(),
         shape = shape,
         color = WortArtColors.Surface,
-        border = BorderStroke(1.dp, WortArtColors.Gold.copy(alpha = 0.35f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, WortArtColors.Border),
     ) {
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        Column(modifier = Modifier.padding(18.dp)) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 LevelBadge(card.level)
-                Spacer(Modifier.size(8.dp))
                 GrammarTag(card.grammarTag())
-                Spacer(Modifier.weight(1f))
-                FavoriteButton(isFavorite = card.isFavorite, onClick = onToggleFavorite)
             }
-
-            Spacer(Modifier.height(20.dp))
-
-            Text(
-                text = card.word,
-                color = WortArtColors.TextPrimary,
-                fontSize = 36.sp,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-            )
 
             Spacer(Modifier.height(16.dp))
 
-            AudioButton(word = card.word, isSpeaking = isSpeaking, onClick = onSpeak)
-
-            Spacer(Modifier.height(20.dp))
-            GoldDivider()
-            Spacer(Modifier.height(20.dp))
-
-            Translation(label = "ENGLISH", text = card.translationEn, color = WortArtColors.TextPrimary)
-            Spacer(Modifier.height(14.dp))
-            Translation(label = "বাংলা", text = card.translationBn, color = WortArtColors.GoldLight)
-
-            Spacer(Modifier.height(24.dp))
-
-            ExampleBox(card)
-
-            if (choiceContent != null) {
-                Spacer(Modifier.height(20.dp))
-                choiceContent()
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = card.word,
+                    color = WortArtColors.TextPrimary,
+                    fontSize = 34.sp,
+                    fontFamily = WortArtFonts.Serif,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f),
+                )
+                AudioButton(word = card.word, isSpeaking = isSpeaking, onClick = onSpeak)
             }
+
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = card.shortMeaning(),
+                color = WortArtColors.TextSecondary,
+                fontSize = 16.sp,
+            )
+
+            Spacer(Modifier.height(18.dp))
+            ExampleBox(card)
         }
     }
 }
 
+/** The CEFR level as a colored rounded badge (A1 green, A2 gold, B1 orange, B2 pink). */
 @Composable
 internal fun LevelBadge(level: String) {
     Text(
@@ -149,21 +119,21 @@ internal fun LevelBadge(level: String) {
         fontSize = 13.sp,
         fontWeight = FontWeight.Bold,
         modifier = Modifier
-            .background(WortArtColors.Gold, RoundedCornerShape(50))
-            .padding(horizontal = 12.dp, vertical = 4.dp),
+            .background(levelColor(level), RoundedCornerShape(8.dp))
+            .padding(horizontal = 10.dp, vertical = 4.dp),
     )
 }
 
 @Composable
-private fun GrammarTag(text: String) {
+internal fun GrammarTag(text: String) {
     Text(
         text = text,
-        color = WortArtColors.Gold,
+        color = WortArtColors.TextSecondary,
         fontSize = 13.sp,
         fontWeight = FontWeight.Medium,
         modifier = Modifier
-            .border(1.dp, WortArtColors.Gold.copy(alpha = 0.6f), RoundedCornerShape(50))
-            .padding(horizontal = 12.dp, vertical = 4.dp),
+            .background(WortArtColors.Elevated, RoundedCornerShape(8.dp))
+            .padding(horizontal = 10.dp, vertical = 4.dp),
     )
 }
 
@@ -188,7 +158,7 @@ private fun AudioButton(word: String, isSpeaking: Boolean, onClick: () -> Unit) 
 
     Box(
         modifier = Modifier
-            .size(60.dp)
+            .size(52.dp)
             .clip(CircleShape)
             .background(background)
             .border(1.5.dp, WortArtColors.Gold, CircleShape)
@@ -203,7 +173,7 @@ private fun AudioButton(word: String, isSpeaking: Boolean, onClick: () -> Unit) 
 /** Speaker icon drawn on a Canvas, so no icon library is needed. */
 @Composable
 private fun SpeakerIcon(color: Color) {
-    Canvas(modifier = Modifier.size(26.dp)) {
+    Canvas(modifier = Modifier.size(24.dp)) {
         val w = size.width
         val h = size.height
 
@@ -241,57 +211,22 @@ private fun SpeakerIcon(color: Color) {
 }
 
 @Composable
-private fun GoldDivider() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(WortArtColors.Gold.copy(alpha = 0.25f)),
-    )
-}
-
-@Composable
-private fun Translation(label: String, text: String, color: Color) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = label,
-            color = WortArtColors.TextMuted,
-            fontSize = 11.sp,
-            letterSpacing = 1.5.sp,
-        )
-        Spacer(Modifier.height(2.dp))
-        Text(
-            text = text,
-            color = color,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.Center,
-        )
-    }
-}
-
-@Composable
 private fun ExampleBox(card: VocabEntity) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(WortArtColors.SurfaceDark, RoundedCornerShape(16.dp))
-            .padding(16.dp),
+            .background(WortArtColors.SurfaceDark, RoundedCornerShape(14.dp))
+            .border(1.dp, WortArtColors.Border, RoundedCornerShape(14.dp))
+            .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
-            text = "EXAMPLE",
-            color = WortArtColors.TextMuted,
-            fontSize = 11.sp,
-            letterSpacing = 1.5.sp,
-        )
-        Text(
             text = highlightWord(card.exampleDe, card.word),
             color = WortArtColors.TextPrimary,
-            fontSize = 18.sp,
+            fontSize = 16.sp,
         )
-        Text(text = card.exampleEn, color = WortArtColors.TextSecondary, fontSize = 15.sp)
-        Text(text = card.exampleBn, color = WortArtColors.GoldLight, fontSize = 15.sp)
+        Text(text = card.exampleEn, color = WortArtColors.TextSecondary, fontSize = 14.sp)
+        Text(text = card.exampleBn, color = WortArtColors.TextSecondary, fontSize = 14.sp)
     }
 }
 
