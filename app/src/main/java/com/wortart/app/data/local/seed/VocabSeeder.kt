@@ -35,7 +35,7 @@ class VocabSeeder(
 
     companion object {
         /** Increase this whenever vocab_seed.json changes. */
-        const val SEED_VERSION = 1
+        const val SEED_VERSION = 2
         const val ASSET_NAME = "vocab_seed.json"
         const val PREFS_NAME = "wortart_seed"
         private const val KEY_SEED_VERSION = "seed_version"

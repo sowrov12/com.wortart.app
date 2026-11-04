@@ -21,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wortart.app.domain.rules.RuleSection
 import com.wortart.app.ui.components.PillChip
 import com.wortart.app.ui.theme.WortArtColors
+import com.wortart.app.ui.theme.WortArtFonts
 
 /** Connects the Rules tab to its [RulesViewModel]. */
 @Composable
@@ -59,6 +60,7 @@ fun RulesHomeScreen(
                 text = "Grammar Rules",
                 color = WortArtColors.TextPrimary,
                 fontSize = 28.sp,
+                fontFamily = WortArtFonts.Serif,
                 fontWeight = FontWeight.Bold,
             )
             Text(

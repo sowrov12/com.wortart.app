@@ -50,6 +50,7 @@ import com.wortart.app.domain.rules.RuleBlock
 import com.wortart.app.domain.rules.RuleSection
 import com.wortart.app.domain.rules.lessons.articleOf
 import com.wortart.app.ui.theme.WortArtColors
+import com.wortart.app.ui.theme.WortArtFonts
 
 /**
  * Colors for der / die / das (keys "der", "die", "das"). The lessons screen provides the colors
@@ -85,6 +86,7 @@ fun GrammarRulesScreen(
                         text = "Grammar Rules",
                         color = WortArtColors.TextPrimary,
                         fontSize = 28.sp,
+                        fontFamily = WortArtFonts.Serif,
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
@@ -143,6 +145,7 @@ private fun RuleCard(section: RuleSection, expanded: Boolean, onToggle: () -> Un
                     text = section.title,
                     color = WortArtColors.TextPrimary,
                     fontSize = 18.sp,
+                    fontFamily = WortArtFonts.Serif,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(text = section.subtitle, color = WortArtColors.Gold, fontSize = 13.sp)

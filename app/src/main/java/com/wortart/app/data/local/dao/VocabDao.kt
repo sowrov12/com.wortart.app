@@ -61,6 +61,7 @@ abstract class VocabDao {
         WHERE (:level IS NULL OR level = :level)
           AND (:category IS NULL OR category = :category)
           AND (:topic IS NULL OR topic = :topic)
+          AND (:favoritesOnly = 0 OR isFavorite = 1)
         ORDER BY word COLLATE NOCASE
         """
     )
@@ -68,6 +69,7 @@ abstract class VocabDao {
         level: String? = null,
         category: String? = null,
         topic: String? = null,
+        favoritesOnly: Boolean = false,
     ): Flow<List<VocabEntity>>
 
     /**
@@ -84,6 +86,7 @@ abstract class VocabDao {
           AND (:level IS NULL OR level = :level)
           AND (:category IS NULL OR category = :category)
           AND (:topic IS NULL OR topic = :topic)
+          AND (:favoritesOnly = 0 OR isFavorite = 1)
         ORDER BY word COLLATE NOCASE
         """
     )
@@ -92,6 +95,7 @@ abstract class VocabDao {
         level: String? = null,
         category: String? = null,
         topic: String? = null,
+        favoritesOnly: Boolean = false,
     ): Flow<List<VocabEntity>>
 
     @Query("SELECT * FROM vocab_table WHERE isFavorite = 1 ORDER BY word COLLATE NOCASE")

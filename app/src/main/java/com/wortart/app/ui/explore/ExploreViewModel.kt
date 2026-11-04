@@ -19,54 +19,53 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** What the Explore tab is showing. */
-sealed interface ExploreDestination {
-    /** The topic grid. */
-    data object Topics : ExploreDestination
-
-    /** The word list of one topic; [topic] = null means all topics. */
-    data class Words(val topic: String?) : ExploreDestination
-}
-
+/** A category (topic) with the number of words that match the other filters. */
 data class TopicSummary(val name: String, val wordCount: Int)
 
 data class ExploreUiState(
-    val destination: ExploreDestination = ExploreDestination.Topics,
     /** Selected CEFR level, or null for all levels. */
     val level: String? = null,
+    /** Selected category (topic), or null for all categories. */
+    val topic: String? = null,
+    val favoritesOnly: Boolean = false,
     /** The search text that is currently applied (trimmed, after the short typing delay). */
     val query: String = "",
-    /** All topics with the number of words that match the selected level. */
+    /** All categories with the number of words that match the level, favorites and search. */
     val topics: List<TopicSummary> = emptyList(),
-    /**
-     * Words to list: search results while [isSearching], otherwise the words of the open
-     * topic. Empty while the topic grid is shown.
-     */
+    /** The words that match every filter. */
     val words: List<VocabEntity> = emptyList(),
+    /** False until the first result has arrived. */
+    val isLoaded: Boolean = false,
 ) {
-    val isSearching: Boolean get() = query.isNotEmpty()
-    val totalWords: Int get() = topics.sumOf { it.wordCount }
+    val hasFilters: Boolean
+        get() = level != null || topic != null || favoritesOnly || query.isNotEmpty()
 }
 
 /**
- * State holder for the Explore tab.
+ * State holder for the Explore tab. Search, level, category and favorites combine freely and can
+ * be cleared one by one or all at once.
  *
- * Search: [query] is the raw text of the search field and updates immediately. The word
- * list reacts to a trimmed, debounced copy of it, so fast typing does not trigger a database
- * query per keystroke, while clearing the field is applied at once. Search covers German,
- * English and Bengali text, respects the level chips and, when a topic is open, stays inside
- * that topic.
+ * [query] is the raw text of the search field and updates immediately. The list reacts to a
+ * trimmed, debounced copy, so fast typing does not trigger a database query per keystroke, while
+ * clearing the field is applied at once. Search covers German, English and Bengali.
  */
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class ExploreViewModel(private val repository: VocabRepository) : ViewModel() {
 
-    private val destination = MutableStateFlow<ExploreDestination>(ExploreDestination.Topics)
+    private data class Filters(
+        val level: String?,
+        val topic: String?,
+        val favoritesOnly: Boolean,
+        val query: String,
+    )
+
     private val level = MutableStateFlow<String?>(null)
+    private val topic = MutableStateFlow<String?>(null)
+    private val favoritesOnly = MutableStateFlow(false)
     private val rawQuery = MutableStateFlow("")
 
     /** Text of the search field, exactly as typed. */
@@ -78,8 +77,10 @@ class ExploreViewModel(private val repository: VocabRepository) : ViewModel() {
         .distinctUntilChanged()
 
     val uiState: StateFlow<ExploreUiState> =
-        combine(destination, level, appliedQuery) { dest, lvl, text -> Triple(dest, lvl, text) }
-            .flatMapLatest { (dest, lvl, text) -> stateFor(dest, lvl, text) }
+        combine(level, topic, favoritesOnly, appliedQuery) { lvl, tpc, favs, text ->
+            Filters(lvl, tpc, favs, text)
+        }
+            .flatMapLatest { filters -> stateFor(filters) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ExploreUiState())
 
     fun onQueryChange(text: String) {
@@ -90,48 +91,72 @@ class ExploreViewModel(private val repository: VocabRepository) : ViewModel() {
         rawQuery.value = ""
     }
 
-    /** Opens the word list of [topic]; null opens all words. */
-    fun openTopic(topic: String?) {
-        destination.value = ExploreDestination.Words(topic)
-    }
-
-    fun closeTopic() {
-        destination.value = ExploreDestination.Topics
-    }
-
     /** Selects a level; selecting the active level again (or null) shows all levels. */
     fun selectLevel(newLevel: String?) {
         level.value = if (newLevel == level.value) null else newLevel
+    }
+
+    /** Selects a category; selecting the active one again (or null) shows all categories. */
+    fun selectTopic(newTopic: String?) {
+        topic.value = if (newTopic == topic.value) null else newTopic
+    }
+
+    fun toggleFavoritesOnly() {
+        favoritesOnly.value = !favoritesOnly.value
+    }
+
+    /** Removes the search text and every filter. */
+    fun clearFilters() {
+        rawQuery.value = ""
+        level.value = null
+        topic.value = null
+        favoritesOnly.value = false
     }
 
     fun toggleFavorite(card: VocabEntity) {
         viewModelScope.launch { repository.setFavorite(card.id, !card.isFavorite) }
     }
 
-    private fun stateFor(dest: ExploreDestination, lvl: String?, text: String): Flow<ExploreUiState> {
+    private fun stateFor(filters: Filters): Flow<ExploreUiState> {
+        // Category counts ignore the selected category, so every category shows how many
+        // words it would give with the other filters.
         val topicsFlow = combine(
             repository.observeTopics(),
-            repository.observeWords(VocabFilter(level = lvl)),
-        ) { names, wordsOfLevel ->
-            val counts = wordsOfLevel.groupingBy { it.topic }.eachCount()
+            repository.observeWords(
+                VocabFilter(
+                    query = filters.query,
+                    level = filters.level,
+                    favoritesOnly = filters.favoritesOnly,
+                ),
+            ),
+        ) { names, matching ->
+            val counts = matching.groupingBy { it.topic }.eachCount()
             sortTopics(names).map { TopicSummary(it, counts[it] ?: 0) }
         }
 
-        val openTopic = (dest as? ExploreDestination.Words)?.topic
-        val wordsFlow: Flow<List<VocabEntity>> = when {
-            text.isNotEmpty() ->
-                repository.observeWords(VocabFilter(query = text, level = lvl, topic = openTopic))
-            dest is ExploreDestination.Words ->
-                repository.observeWords(VocabFilter(level = lvl, topic = dest.topic))
-            else -> flowOf(emptyList())
-        }
+        val wordsFlow = repository.observeWords(
+            VocabFilter(
+                query = filters.query,
+                level = filters.level,
+                topic = filters.topic,
+                favoritesOnly = filters.favoritesOnly,
+            ),
+        )
 
         return combine(topicsFlow, wordsFlow) { topics, words ->
-            ExploreUiState(destination = dest, level = lvl, query = text, topics = topics, words = words)
+            ExploreUiState(
+                level = filters.level,
+                topic = filters.topic,
+                favoritesOnly = filters.favoritesOnly,
+                query = filters.query,
+                topics = topics,
+                words = words,
+                isLoaded = true,
+            )
         }
     }
 
-    /** Featured topics first (Food, Career, Health), then the rest alphabetically. */
+    /** Featured categories first (Food, Career, Health), then the rest alphabetically. */
     private fun sortTopics(names: List<String>): List<String> =
         names.sortedWith(compareBy<String>({ featuredRank(it) }, { it.lowercase() }))
 

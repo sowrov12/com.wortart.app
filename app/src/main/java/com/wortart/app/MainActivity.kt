@@ -44,16 +44,20 @@ import com.wortart.app.ui.stats.StatsViewModel
 import com.wortart.app.ui.theme.WortArtColors
 import com.wortart.app.ui.theme.WortArtTheme
 import com.wortart.app.ui.welcome.WelcomeScreen
+import com.wortart.app.ui.worddetails.WordDetailsRoute
+import com.wortart.app.ui.worddetails.WordDetailsViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 private const val ROUTE_WELCOME = 0
 private const val ROUTE_MAIN = 1
 private const val ROUTE_PRACTICE = 2
+private const val ROUTE_DETAILS = 3
 
 /**
  * Hosts the app: the welcome screen on the first start, then the tabs (Home, Explore, Rules,
- * Stats, Profile) and the full-screen flashcard session that opens from Home.
+ * Stats, Profile), the full-screen flashcard session that opens from Home and the word details
+ * page that opens from Explore.
  */
 class MainActivity : ComponentActivity() {
 
@@ -98,6 +102,7 @@ class MainActivity : ComponentActivity() {
                 }
                 var tabIndex by rememberSaveable { mutableIntStateOf(MainTab.Home.ordinal) }
                 var showAdmin by rememberSaveable { mutableStateOf(false) }
+                var detailsWordId by rememberSaveable { mutableStateOf<String?>(null) }
 
                 val summary by statsViewModel.uiState.collectAsState()
                 val session by app.membershipRepository.session.collectAsState()
@@ -152,6 +157,24 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
+                        ROUTE_DETAILS -> {
+                            val wordId = detailsWordId.orEmpty()
+                            val detailsViewModel: WordDetailsViewModel = viewModel(
+                                key = "details-$wordId",
+                                factory = WordDetailsViewModel.factory(wordId, repository),
+                            )
+                            WordDetailsRoute(
+                                viewModel = detailsViewModel,
+                                isSpeaking = speechState.speakingId == wordId,
+                                onSpeak = speakWord,
+                                onBack = {
+                                    speech.stop()
+                                    route = ROUTE_MAIN
+                                },
+                                modifier = Modifier.safeDrawingPadding(),
+                            )
+                        }
+
                         else -> MainScreen(
                             selectedTab = MainTab.entries[tabIndex],
                             onSelectTab = { tabIndex = it.ordinal },
@@ -172,7 +195,14 @@ class MainActivity : ComponentActivity() {
                                 )
                             },
                             explore = {
-                                ExploreRoute(viewModel = exploreViewModel, modifier = Modifier.fillMaxSize())
+                                ExploreRoute(
+                                    viewModel = exploreViewModel,
+                                    onOpenWord = { id ->
+                                        detailsWordId = id
+                                        route = ROUTE_DETAILS
+                                    },
+                                    modifier = Modifier.fillMaxSize(),
+                                )
                             },
                             rules = {
                                 GrammarRulesRoute(viewModel = rulesViewModel, modifier = Modifier.fillMaxSize())

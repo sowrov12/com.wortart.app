@@ -18,9 +18,9 @@ class VocabRepositoryImpl(
     override fun observeWords(filter: VocabFilter): Flow<List<VocabEntity>> {
         val query = filter.query.trim()
         val source = if (query.isEmpty()) {
-            dao.observeFiltered(filter.level, filter.category, filter.topic)
+            dao.observeFiltered(filter.level, filter.category, filter.topic, filter.favoritesOnly)
         } else {
-            dao.search(query.escapeForLike(), filter.level, filter.category, filter.topic)
+            dao.search(query.escapeForLike(), filter.level, filter.category, filter.topic, filter.favoritesOnly)
         }
         return source.distinctUntilChanged().flowOn(ioDispatcher)
     }

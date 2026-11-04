@@ -149,7 +149,7 @@ internal fun FavoriteButton(isFavorite: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun AudioButton(word: String, isSpeaking: Boolean, onClick: () -> Unit) {
+internal fun AudioButton(word: String, isSpeaking: Boolean, onClick: () -> Unit) {
     val background by animateColorAsState(
         targetValue = if (isSpeaking) WortArtColors.Gold else Color.Transparent,
         label = "audioButtonBackground",
@@ -211,7 +211,7 @@ private fun SpeakerIcon(color: Color) {
 }
 
 @Composable
-private fun ExampleBox(card: VocabEntity) {
+internal fun ExampleBox(card: VocabEntity) {
     Column(
         modifier = Modifier
             .fillMaxWidth()

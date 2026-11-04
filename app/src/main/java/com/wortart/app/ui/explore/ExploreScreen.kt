@@ -4,7 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,57 +15,61 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.wortart.app.data.local.entity.CefrLevels
 import com.wortart.app.data.local.entity.VocabEntity
+import com.wortart.app.domain.question.shortMeaning
 import com.wortart.app.ui.components.FavoriteButton
 import com.wortart.app.ui.components.LevelBadge
-import com.wortart.app.ui.components.grammarTag
+import com.wortart.app.ui.components.LevelFilterRow
+import com.wortart.app.ui.components.OutlineButton
 import com.wortart.app.ui.theme.WortArtColors
+import com.wortart.app.ui.theme.WortArtFonts
 
-/** Connects [ExploreScreen] to its [ExploreViewModel] and handles the system Back button. */
+/** Connects [ExploreScreen] to its [ExploreViewModel]. Back clears the filters first. */
 @Composable
-fun ExploreRoute(viewModel: ExploreViewModel, modifier: Modifier = Modifier) {
+fun ExploreRoute(
+    viewModel: ExploreViewModel,
+    onOpenWord: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
 
-    // Back first clears the search text, then leaves the open topic.
-    BackHandler(enabled = query.isNotEmpty() || state.destination is ExploreDestination.Words) {
-        if (query.isNotEmpty()) viewModel.clearQuery() else viewModel.closeTopic()
+    BackHandler(enabled = state.hasFilters || query.isNotEmpty()) {
+        viewModel.clearFilters()
     }
 
     ExploreScreen(
@@ -74,16 +77,18 @@ fun ExploreRoute(viewModel: ExploreViewModel, modifier: Modifier = Modifier) {
         query = query,
         onQueryChange = viewModel::onQueryChange,
         onSelectLevel = viewModel::selectLevel,
-        onOpenTopic = viewModel::openTopic,
-        onCloseTopic = viewModel::closeTopic,
+        onSelectTopic = viewModel::selectTopic,
+        onToggleFavoritesOnly = viewModel::toggleFavoritesOnly,
+        onClearFilters = viewModel::clearFilters,
+        onOpenWord = onOpenWord,
         onToggleFavorite = viewModel::toggleFavorite,
         modifier = modifier,
     )
 }
 
 /**
- * Explore tab: search field and level filter chips on top, then either the topic grid
- * or a word list (an open topic, or search results). Stateless.
+ * Explore tab: search, level chips, category cards and the list of matching words. All filters
+ * combine and can be cleared. Stateless.
  *
  * @param query the text of the search field, exactly as typed.
  */
@@ -93,219 +98,257 @@ fun ExploreScreen(
     query: String,
     onQueryChange: (String) -> Unit,
     onSelectLevel: (String?) -> Unit,
-    onOpenTopic: (String?) -> Unit,
-    onCloseTopic: () -> Unit,
+    onSelectTopic: (String?) -> Unit,
+    onToggleFavoritesOnly: () -> Unit,
+    onClearFilters: () -> Unit,
+    onOpenWord: (String) -> Unit,
     onToggleFavorite: (VocabEntity) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Spacer(Modifier.height(16.dp))
-        ExploreHeader(state = state, onBack = onCloseTopic)
-        Spacer(Modifier.height(14.dp))
-        SearchField(query = query, onQueryChange = onQueryChange)
-        Spacer(Modifier.height(12.dp))
-        LevelChips(selected = state.level, onSelect = onSelectLevel)
-        Spacer(Modifier.height(16.dp))
-
-        val showList = state.destination is ExploreDestination.Words || state.isSearching
-        if (showList) {
-            WordList(
-                words = state.words,
-                emptyMessage = if (state.isSearching) {
-                    "No results for “${state.query}”."
-                } else {
-                    "No words found."
-                },
-                onToggleFavorite = onToggleFavorite,
-            )
-        } else {
-            TopicGrid(
-                topics = state.topics,
-                totalWords = state.totalWords,
-                onOpenTopic = onOpenTopic,
-            )
-        }
-    }
-}
-
-private fun wordCountLabel(count: Int): String = "$count ${if (count == 1) "word" else "words"}"
-
-@Composable
-private fun ExploreHeader(state: ExploreUiState, onBack: () -> Unit) {
-    when (val destination = state.destination) {
-        ExploreDestination.Topics -> Column {
+        item {
             Text(
-                text = if (state.isSearching) "Search results" else "Explore",
+                text = "Explore",
                 color = WortArtColors.TextPrimary,
                 fontSize = 28.sp,
+                fontFamily = WortArtFonts.Serif,
                 fontWeight = FontWeight.Bold,
             )
-            Text(
-                text = if (state.isSearching) {
-                    wordCountLabel(state.words.size)
+        }
+
+        item {
+            SearchRow(
+                query = query,
+                onQueryChange = onQueryChange,
+                favoritesOnly = state.favoritesOnly,
+                onToggleFavoritesOnly = onToggleFavoritesOnly,
+            )
+        }
+
+        item { LevelFilterRow(selected = state.level, onSelect = onSelectLevel) }
+
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = "Categories",
+                    color = WortArtColors.TextPrimary,
+                    fontSize = 18.sp,
+                    fontFamily = WortArtFonts.Serif,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                if (state.topics.isEmpty()) {
+                    Text(text = "Loading categories…", color = WortArtColors.TextSecondary, fontSize = 14.sp)
                 } else {
-                    "Browse words by topic and level"
-                },
-                color = WortArtColors.TextSecondary,
-                fontSize = 14.sp,
-            )
-        }
-
-        is ExploreDestination.Words -> Column {
-            Text(
-                text = "‹ Topics",
-                color = WortArtColors.Gold,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier
-                    .clickable(role = Role.Button, onClick = onBack)
-                    .padding(vertical = 4.dp),
-            )
-            Text(
-                text = destination.topic ?: "All words",
-                color = WortArtColors.TextPrimary,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = wordCountLabel(state.words.size),
-                color = WortArtColors.TextSecondary,
-                fontSize = 14.sp,
-            )
-        }
-    }
-}
-
-@Composable
-private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
-    val focusManager = LocalFocusManager.current
-
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag("searchField"),
-        singleLine = true,
-        shape = RoundedCornerShape(16.dp),
-        placeholder = {
-            Text(text = "Search German, English or Bengali", color = WortArtColors.TextMuted)
-        },
-        leadingIcon = { Icon(imageVector = Icons.Filled.Search, contentDescription = null) },
-        trailingIcon = {
-            if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(imageVector = Icons.Filled.Close, contentDescription = "Clear search")
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        items(state.topics, key = { it.name }) { topic ->
+                            CategoryCard(
+                                topic = topic,
+                                selected = state.topic == topic.name,
+                                onClick = { onSelectTopic(topic.name) },
+                            )
+                        }
+                    }
                 }
             }
-        },
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = WortArtColors.TextPrimary,
-            unfocusedTextColor = WortArtColors.TextPrimary,
-            focusedContainerColor = WortArtColors.Surface,
-            unfocusedContainerColor = WortArtColors.Surface,
-            cursorColor = WortArtColors.Gold,
-            focusedBorderColor = WortArtColors.Gold,
-            unfocusedBorderColor = WortArtColors.Gold.copy(alpha = 0.4f),
-            focusedLeadingIconColor = WortArtColors.Gold,
-            unfocusedLeadingIconColor = WortArtColors.TextMuted,
-            focusedTrailingIconColor = WortArtColors.Gold,
-            unfocusedTrailingIconColor = WortArtColors.TextSecondary,
-        ),
-    )
-}
-
-@Composable
-private fun LevelChips(selected: String?, onSelect: (String?) -> Unit) {
-    Row(
-        modifier = Modifier.horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        LevelChip(label = "All", selected = selected == null) { onSelect(null) }
-        CefrLevels.ALL.forEach { level ->
-            LevelChip(label = level, selected = selected == level) { onSelect(level) }
         }
-    }
-}
 
-@Composable
-private fun LevelChip(label: String, selected: Boolean, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(50)
-    Box(
-        modifier = Modifier
-            .clip(shape)
-            .background(if (selected) WortArtColors.Gold else Color.Transparent)
-            .border(
-                width = 1.dp,
-                color = if (selected) WortArtColors.Gold else WortArtColors.Gold.copy(alpha = 0.5f),
-                shape = shape,
+        item {
+            ResultsHeader(
+                title = if (state.hasFilters) "Results" else "Words",
+                count = state.words.size,
+                showClear = state.hasFilters && state.words.isNotEmpty(),
+                onClear = onClearFilters,
             )
-            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 8.dp),
-    ) {
-        Text(
-            text = label,
-            color = if (selected) WortArtColors.OnGold else WortArtColors.TextPrimary,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-        )
+        }
+
+        if (state.isLoaded && state.words.isEmpty()) {
+            item { EmptyState(hasFilters = state.hasFilters, onClearFilters = onClearFilters) }
+        } else {
+            items(state.words, key = { it.id }) { word ->
+                WordRow(
+                    card = word,
+                    onClick = { onOpenWord(word.id) },
+                    onToggleFavorite = { onToggleFavorite(word) },
+                )
+            }
+        }
     }
 }
 
 @Composable
-private fun TopicGrid(
-    topics: List<TopicSummary>,
-    totalWords: Int,
-    onOpenTopic: (String?) -> Unit,
+private fun SearchRow(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    favoritesOnly: Boolean,
+    onToggleFavoritesOnly: () -> Unit,
 ) {
-    if (topics.isEmpty()) {
-        Text(text = "Loading topics…", color = WortArtColors.TextSecondary, fontSize = 15.sp)
-        return
-    }
+    val focusManager = LocalFocusManager.current
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(bottom = 16.dp),
-    ) {
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            TopicCard(emoji = "📚", title = "All words", wordCount = totalWords) {
-                onOpenTopic(null)
-            }
-        }
-        items(topics, key = { it.name }) { topic ->
-            TopicCard(
-                emoji = topicEmoji(topic.name),
-                title = topic.name,
-                wordCount = topic.wordCount,
-            ) {
-                onOpenTopic(topic.name)
-            }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        OutlinedTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            modifier = Modifier
+                .weight(1f)
+                .testTag("searchField"),
+            singleLine = true,
+            shape = RoundedCornerShape(16.dp),
+            placeholder = { Text(text = "Search words…", color = WortArtColors.TextMuted) },
+            leadingIcon = { Icon(imageVector = Icons.Filled.Search, contentDescription = null) },
+            trailingIcon = {
+                if (query.isNotEmpty()) {
+                    IconButton(onClick = { onQueryChange("") }) {
+                        Icon(imageVector = Icons.Filled.Close, contentDescription = "Clear search")
+                    }
+                }
+            },
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = WortArtColors.TextPrimary,
+                unfocusedTextColor = WortArtColors.TextPrimary,
+                focusedContainerColor = WortArtColors.Surface,
+                unfocusedContainerColor = WortArtColors.Surface,
+                cursorColor = WortArtColors.Gold,
+                focusedBorderColor = WortArtColors.Gold,
+                unfocusedBorderColor = WortArtColors.Border,
+                focusedLeadingIconColor = WortArtColors.Gold,
+                unfocusedLeadingIconColor = WortArtColors.TextMuted,
+                focusedTrailingIconColor = WortArtColors.Gold,
+                unfocusedTrailingIconColor = WortArtColors.TextSecondary,
+            ),
+        )
+        Spacer(Modifier.size(10.dp))
+        val shape = RoundedCornerShape(16.dp)
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .clip(shape)
+                .background(if (favoritesOnly) WortArtColors.Gold.copy(alpha = 0.18f) else WortArtColors.Surface)
+                .border(1.dp, if (favoritesOnly) WortArtColors.Gold else WortArtColors.Border, shape)
+                .clickable(role = Role.Switch, onClick = onToggleFavoritesOnly),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = if (favoritesOnly) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                contentDescription = "Show favorites only",
+                tint = WortArtColors.Gold,
+            )
         }
     }
 }
 
 @Composable
-private fun TopicCard(emoji: String, title: String, wordCount: Int, onClick: () -> Unit) {
-    val enabled = wordCount > 0
-    val shape = RoundedCornerShape(20.dp)
+private fun CategoryCard(topic: TopicSummary, selected: Boolean, onClick: () -> Unit) {
+    val enabled = topic.wordCount > 0 || selected
+    val shape = RoundedCornerShape(16.dp)
 
     Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .width(100.dp)
             .alpha(if (enabled) 1f else 0.4f)
             .clip(shape)
-            .background(WortArtColors.Surface)
-            .border(1.dp, WortArtColors.Gold.copy(alpha = 0.25f), shape)
+            .background(if (selected) WortArtColors.Gold.copy(alpha = 0.14f) else WortArtColors.Surface)
+            .border(
+                width = if (selected) 1.5.dp else 1.dp,
+                color = if (selected) WortArtColors.Gold else WortArtColors.Border,
+                shape = shape,
+            )
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .padding(16.dp),
+            .padding(vertical = 12.dp, horizontal = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .background(WortArtColors.Gold.copy(alpha = 0.14f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = topicEmoji(topic.name), fontSize = 20.sp)
+        }
+        Text(
+            text = topic.name,
+            color = if (selected) WortArtColors.Gold else WortArtColors.TextPrimary,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+        )
+        Text(text = "(${topic.wordCount})", color = WortArtColors.TextMuted, fontSize = 12.sp)
+    }
+}
+
+@Composable
+private fun ResultsHeader(title: String, count: Int, showClear: Boolean, onClear: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = "$title ($count)",
+            color = WortArtColors.TextPrimary,
+            fontSize = 18.sp,
+            fontFamily = WortArtFonts.Serif,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f),
+        )
+        if (showClear) {
+            TextButton(onClick = onClear) {
+                Text(text = "Clear filters", color = WortArtColors.Gold, fontWeight = FontWeight.Medium)
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyState(hasFilters: Boolean, onClearFilters: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text(text = "🔍", fontSize = 36.sp)
+        Text(
+            text = "No words found",
+            color = WortArtColors.TextPrimary,
+            fontSize = 18.sp,
+            fontFamily = WortArtFonts.Serif,
+            fontWeight = FontWeight.SemiBold,
+        )
+        if (hasFilters) {
+            Text(
+                text = "Try another search or remove a filter.",
+                color = WortArtColors.TextSecondary,
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center,
+            )
+            OutlineButton(text = "Clear filters", onClick = onClearFilters)
+        } else {
+            Text(
+                text = "The vocabulary is still loading.",
+                color = WortArtColors.TextSecondary,
+                fontSize = 14.sp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WordRow(card: VocabEntity, onClick: () -> Unit, onToggleFavorite: () -> Unit) {
+    val shape = RoundedCornerShape(16.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(WortArtColors.Surface)
+            .border(1.dp, WortArtColors.Border, shape)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(start = 12.dp, top = 10.dp, bottom = 10.dp, end = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier
@@ -313,74 +356,23 @@ private fun TopicCard(emoji: String, title: String, wordCount: Int, onClick: () 
                 .background(WortArtColors.Gold.copy(alpha = 0.14f), CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = emoji, fontSize = 22.sp)
+            Text(text = topicEmoji(card.topic), fontSize = 22.sp)
         }
-        Spacer(Modifier.height(12.dp))
-        Text(
-            text = title,
-            color = WortArtColors.TextPrimary,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Text(
-            text = wordCountLabel(wordCount),
-            color = WortArtColors.TextMuted,
-            fontSize = 13.sp,
-        )
-    }
-}
-
-@Composable
-private fun WordList(
-    words: List<VocabEntity>,
-    emptyMessage: String,
-    onToggleFavorite: (VocabEntity) -> Unit,
-) {
-    if (words.isEmpty()) {
-        Text(text = emptyMessage, color = WortArtColors.TextSecondary, fontSize = 15.sp)
-        return
-    }
-
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        contentPadding = PaddingValues(bottom = 16.dp),
-    ) {
-        items(words, key = { it.id }) { word ->
-            WordRow(card = word, onToggleFavorite = { onToggleFavorite(word) })
-        }
-    }
-}
-
-@Composable
-private fun WordRow(card: VocabEntity, onToggleFavorite: () -> Unit) {
-    val shape = RoundedCornerShape(16.dp)
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(WortArtColors.Surface)
-            .border(1.dp, WortArtColors.Gold.copy(alpha = 0.2f), shape)
-            .padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+        Spacer(Modifier.size(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = card.word,
-                    color = WortArtColors.TextPrimary,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Spacer(Modifier.size(8.dp))
-                LevelBadge(card.level)
-            }
-            Spacer(Modifier.height(2.dp))
-            Text(text = card.grammarTag(), color = WortArtColors.Gold, fontSize = 12.sp)
-            Spacer(Modifier.height(4.dp))
-            Text(text = card.translationEn, color = WortArtColors.TextSecondary, fontSize = 15.sp)
-            Text(text = card.translationBn, color = WortArtColors.GoldLight, fontSize = 15.sp)
+            Text(
+                text = card.word,
+                color = WortArtColors.TextPrimary,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = card.shortMeaning().replace(" / ", " | "),
+                color = WortArtColors.TextSecondary,
+                fontSize = 13.sp,
+            )
         }
+        LevelBadge(card.level)
         FavoriteButton(isFavorite = card.isFavorite, onClick = onToggleFavorite)
     }
 }

@@ -11,12 +11,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
-import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -33,6 +35,7 @@ class ExploreViewModelTest {
                 (filter.level == null || it.level == filter.level) &&
                     (filter.category == null || it.category == filter.category) &&
                     (filter.topic == null || it.topic == filter.topic) &&
+                    (!filter.favoritesOnly || it.isFavorite) &&
                     matchesQuery(it, filter.query.trim())
             }
         }
@@ -57,13 +60,7 @@ class ExploreViewModelTest {
         override suspend fun getDistractors(card: VocabEntity, count: Int) = emptyList<VocabEntity>()
     }
 
-    private fun word(
-        id: String,
-        topic: String,
-        level: String,
-        en: String = "en",
-        bn: String = "bn",
-    ) = VocabEntity(
+    private fun word(id: String, topic: String, level: String, en: String, bn: String) = VocabEntity(
         id = id,
         word = id,
         category = "regular_verb",
@@ -77,12 +74,12 @@ class ExploreViewModelTest {
         auxiliary = "haben",
     )
 
-    private val gehen = word("gehen", "Movement", "A1", en = "to go", bn = "যাওয়া")
-    private val kochen = word("kochen", "Food", "A1", en = "to cook", bn = "রান্না করা")
-    private val essen = word("essen", "Food", "A1", en = "to eat", bn = "খাওয়া")
-    private val arbeiten = word("arbeiten", "Career", "B1", en = "to work", bn = "কাজ করা")
-    private val gesund = word("gesund", "Health", "A2", en = "healthy", bn = "সুস্থ")
-    private val krank = word("krank", "Health", "A2", en = "sick", bn = "অসুস্থ")
+    private val gehen = word("gehen", "Movement", "A1", "to go", "যাওয়া")
+    private val kochen = word("kochen", "Food", "A1", "to cook", "রান্না করা")
+    private val essen = word("essen", "Food", "A1", "to eat", "খাওয়া")
+    private val arbeiten = word("arbeiten", "Career", "B1", "to work", "কাজ করা")
+    private val gesund = word("gesund", "Health", "A2", "healthy", "সুস্থ")
+    private val krank = word("krank", "Health", "A2", "sick", "অসুস্থ")
 
     private val repository = FakeRepository(listOf(gehen, kochen, essen, arbeiten, gesund, krank))
 
@@ -111,22 +108,37 @@ class ExploreViewModelTest {
         runCurrent()
     }
 
+    private fun ExploreUiState.ids() = words.map { it.id }
+
+    // ---- Start ----
+
     @Test
-    fun topicsAreSortedFeaturedFirstAndCounted() = runWithViewModel { viewModel ->
+    fun startsWithAllWordsAndNoFilters() = runWithViewModel { viewModel ->
+        val state = viewModel.uiState.value
+
+        assertTrue(state.isLoaded)
+        assertFalse(state.hasFilters)
+        assertEquals(6, state.words.size)
+    }
+
+    @Test
+    fun categoriesAreSortedFeaturedFirstAndCounted() = runWithViewModel { viewModel ->
         val topics = viewModel.uiState.value.topics
 
         assertEquals(listOf("Food", "Career", "Health", "Movement"), topics.map { it.name })
         assertEquals(listOf(2, 1, 2, 1), topics.map { it.wordCount })
-        assertEquals(6, viewModel.uiState.value.totalWords)
-        assertEquals(ExploreDestination.Topics, viewModel.uiState.value.destination)
     }
 
+    // ---- Level ----
+
     @Test
-    fun levelFilterChangesTheTopicCounts() = runWithViewModel { viewModel ->
+    fun theLevelFilterKeepsMatchingWordsAndUpdatesTheCounts() = runWithViewModel { viewModel ->
         viewModel.selectLevel("A1")
 
         val state = viewModel.uiState.value
         assertEquals("A1", state.level)
+        assertTrue(state.hasFilters)
+        assertEquals(listOf("gehen", "kochen", "essen"), state.ids())
         assertEquals(
             mapOf("Food" to 2, "Career" to 0, "Health" to 0, "Movement" to 1),
             state.topics.associate { it.name to it.wordCount },
@@ -137,65 +149,84 @@ class ExploreViewModelTest {
     fun selectingTheActiveLevelAgainClearsIt() = runWithViewModel { viewModel ->
         viewModel.selectLevel("A1")
         viewModel.selectLevel("A1")
-        assertEquals(null, viewModel.uiState.value.level)
+        assertNull(viewModel.uiState.value.level)
 
         viewModel.selectLevel("B1")
         viewModel.selectLevel(null)
-        assertEquals(null, viewModel.uiState.value.level)
+        assertNull(viewModel.uiState.value.level)
     }
 
+    // ---- Category ----
+
     @Test
-    fun openingATopicShowsItsWords() = runWithViewModel { viewModel ->
-        viewModel.openTopic("Food")
+    fun aCategoryFiltersTheWordsButNotTheCategoryCounts() = runWithViewModel { viewModel ->
+        viewModel.selectTopic("Food")
 
         val state = viewModel.uiState.value
-        assertEquals(ExploreDestination.Words("Food"), state.destination)
-        assertEquals(listOf("kochen", "essen"), state.words.map { it.id })
+        assertEquals("Food", state.topic)
+        assertEquals(listOf("kochen", "essen"), state.ids())
+        assertEquals(listOf(2, 1, 2, 1), state.topics.map { it.wordCount })
     }
 
     @Test
-    fun topicAndLevelFiltersCombine() = runWithViewModel { viewModel ->
+    fun selectingTheActiveCategoryAgainClearsIt() = runWithViewModel { viewModel ->
+        viewModel.selectTopic("Food")
+        viewModel.selectTopic("Food")
+
+        assertNull(viewModel.uiState.value.topic)
+        assertEquals(6, viewModel.uiState.value.words.size)
+    }
+
+    @Test
+    fun levelAndCategoryCombine() = runWithViewModel { viewModel ->
         viewModel.selectLevel("A2")
-        viewModel.openTopic("Health")
-        assertEquals(listOf("gesund", "krank"), viewModel.uiState.value.words.map { it.id })
+        viewModel.selectTopic("Health")
+        assertEquals(listOf("gesund", "krank"), viewModel.uiState.value.ids())
 
         viewModel.selectLevel("B1")
         assertTrue(viewModel.uiState.value.words.isEmpty())
     }
 
+    // ---- Favorites ----
+
     @Test
-    fun openingAllWordsShowsEveryWord() = runWithViewModel { viewModel ->
-        viewModel.openTopic(null)
+    fun favoritesOnlyShowsJustTheFavorites() = runWithViewModel { viewModel ->
+        viewModel.toggleFavorite(kochen)
+        viewModel.toggleFavorite(gesund)
+
+        viewModel.toggleFavoritesOnly()
 
         val state = viewModel.uiState.value
-        assertEquals(ExploreDestination.Words(null), state.destination)
-        assertEquals(6, state.words.size)
+        assertTrue(state.favoritesOnly)
+        assertEquals(listOf("kochen", "gesund"), state.ids())
+
+        viewModel.toggleFavoritesOnly()
+        assertEquals(6, viewModel.uiState.value.words.size)
     }
 
     @Test
-    fun closingATopicReturnsToTheGrid() = runWithViewModel { viewModel ->
-        viewModel.openTopic("Food")
-        viewModel.closeTopic()
+    fun favoritesCombineWithTheOtherFilters() = runWithViewModel { viewModel ->
+        viewModel.toggleFavorite(kochen)
+        viewModel.toggleFavorite(gesund)
 
-        val state = viewModel.uiState.value
-        assertEquals(ExploreDestination.Topics, state.destination)
-        assertTrue(state.words.isEmpty())
+        viewModel.toggleFavoritesOnly()
+        viewModel.selectTopic("Food")
+
+        assertEquals(listOf("kochen"), viewModel.uiState.value.ids())
     }
 
     @Test
-    fun toggleFavoriteUpdatesTheRepositoryAndTheList() = runWithViewModel { viewModel ->
-        viewModel.openTopic("Food")
+    fun theHeartOfAWordUpdatesTheRepositoryAndTheList() = runWithViewModel { viewModel ->
         viewModel.toggleFavorite(kochen)
 
         assertEquals("kochen" to true, repository.lastFavoriteCall)
-        val updated = viewModel.uiState.value.words.first { it.id == "kochen" }
-        assertTrue(updated.isFavorite)
+        assertTrue(viewModel.uiState.value.words.first { it.id == "kochen" }.isFavorite)
     }
 
     // ---- Search ----
 
     @Test
-    fun queryTextIsExposedImmediatelyButAppliedAfterTheTypingPause() = runWithViewModel { viewModel ->
+    fun theQueryIsExposedAtOnceButAppliedAfterTheTypingPause() = runWithViewModel { viewModel ->
         viewModel.onQueryChange("to ")
 
         assertEquals("to ", viewModel.query.value)
@@ -203,64 +234,45 @@ class ExploreViewModelTest {
 
         letSearchSettle()
         assertEquals("to", viewModel.uiState.value.query)
-        assertTrue(viewModel.uiState.value.isSearching)
+        assertTrue(viewModel.uiState.value.hasFilters)
     }
 
     @Test
     fun searchFindsWordsInGermanEnglishAndBengali() = runWithViewModel { viewModel ->
         viewModel.onQueryChange("geh")
         letSearchSettle()
-        assertEquals(listOf("gehen"), viewModel.uiState.value.words.map { it.id })
+        assertEquals(listOf("gehen"), viewModel.uiState.value.ids())
 
         viewModel.onQueryChange("healthy")
         letSearchSettle()
-        assertEquals(listOf("gesund"), viewModel.uiState.value.words.map { it.id })
+        assertEquals(listOf("gesund"), viewModel.uiState.value.ids())
 
         viewModel.onQueryChange("কাজ")
         letSearchSettle()
-        assertEquals(listOf("arbeiten"), viewModel.uiState.value.words.map { it.id })
+        assertEquals(listOf("arbeiten"), viewModel.uiState.value.ids())
     }
 
     @Test
-    fun searchSearchesAllTopicsFromTheGrid() = runWithViewModel { viewModel ->
+    fun searchCombinesWithLevelAndCategory() = runWithViewModel { viewModel ->
         viewModel.onQueryChange("to")
         letSearchSettle()
+        assertEquals(listOf("gehen", "kochen", "essen", "arbeiten"), viewModel.uiState.value.ids())
 
-        val state = viewModel.uiState.value
-        assertEquals(ExploreDestination.Topics, state.destination)
-        assertEquals(listOf("gehen", "kochen", "essen", "arbeiten"), state.words.map { it.id })
-    }
-
-    @Test
-    fun searchRespectsTheLevelFilter() = runWithViewModel { viewModel ->
         viewModel.selectLevel("A1")
-        viewModel.onQueryChange("to")
-        letSearchSettle()
+        assertEquals(listOf("gehen", "kochen", "essen"), viewModel.uiState.value.ids())
 
-        assertEquals(listOf("gehen", "kochen", "essen"), viewModel.uiState.value.words.map { it.id })
+        viewModel.selectTopic("Food")
+        assertEquals(listOf("kochen", "essen"), viewModel.uiState.value.ids())
     }
 
     @Test
-    fun searchInsideAnOpenTopicStaysInThatTopic() = runWithViewModel { viewModel ->
-        viewModel.openTopic("Food")
-        viewModel.onQueryChange("to")
+    fun searchChangesTheCategoryCounts() = runWithViewModel { viewModel ->
+        viewModel.onQueryChange("to c")
         letSearchSettle()
 
-        assertEquals(listOf("kochen", "essen"), viewModel.uiState.value.words.map { it.id })
-    }
-
-    @Test
-    fun clearingTheQueryIsAppliedAtOnce() = runWithViewModel { viewModel ->
-        viewModel.onQueryChange("to")
-        letSearchSettle()
-        assertTrue(viewModel.uiState.value.isSearching)
-
-        viewModel.clearQuery()
-
-        // No waiting: the result list disappears immediately.
-        assertEquals("", viewModel.query.value)
-        assertEquals("", viewModel.uiState.value.query)
-        assertTrue(viewModel.uiState.value.words.isEmpty())
+        val counts = viewModel.uiState.value.topics.associate { it.name to it.wordCount }
+        assertEquals(1, counts["Food"])
+        assertEquals(0, counts["Health"])
     }
 
     @Test
@@ -273,25 +285,61 @@ class ExploreViewModelTest {
         assertEquals("", viewModel.uiState.value.query)
 
         letSearchSettle()
-        assertEquals("to c", viewModel.uiState.value.query)
-        assertEquals(listOf("kochen"), viewModel.uiState.value.words.map { it.id })
+        assertEquals(listOf("kochen"), viewModel.uiState.value.ids())
     }
 
     @Test
-    fun blankQueryIsNotASearch() = runWithViewModel { viewModel ->
+    fun aBlankQueryIsNotASearch() = runWithViewModel { viewModel ->
         viewModel.onQueryChange("   ")
         letSearchSettle()
 
-        assertTrue(!viewModel.uiState.value.isSearching)
-        assertTrue(viewModel.uiState.value.words.isEmpty())
+        assertFalse(viewModel.uiState.value.hasFilters)
+        assertEquals(6, viewModel.uiState.value.words.size)
     }
 
     @Test
-    fun queryWithoutMatchesGivesAnEmptyList() = runWithViewModel { viewModel ->
+    fun aQueryWithoutMatchesGivesAnEmptyListAfterLoading() = runWithViewModel { viewModel ->
         viewModel.onQueryChange("zzz")
         letSearchSettle()
 
-        assertTrue(viewModel.uiState.value.isSearching)
-        assertTrue(viewModel.uiState.value.words.isEmpty())
+        val state = viewModel.uiState.value
+        assertTrue(state.isLoaded)
+        assertTrue(state.words.isEmpty())
+        assertTrue(state.hasFilters)
+    }
+
+    // ---- Clearing ----
+
+    @Test
+    fun clearFiltersResetsEverythingAtOnce() = runWithViewModel { viewModel ->
+        viewModel.selectLevel("A1")
+        viewModel.selectTopic("Food")
+        viewModel.toggleFavoritesOnly()
+        viewModel.onQueryChange("to")
+        letSearchSettle()
+        assertTrue(viewModel.uiState.value.hasFilters)
+
+        viewModel.clearFilters()
+
+        // No waiting: the filters and the search text are gone immediately.
+        val state = viewModel.uiState.value
+        assertEquals("", viewModel.query.value)
+        assertEquals("", state.query)
+        assertNull(state.level)
+        assertNull(state.topic)
+        assertFalse(state.favoritesOnly)
+        assertFalse(state.hasFilters)
+        assertEquals(6, state.words.size)
+    }
+
+    @Test
+    fun clearingTheQueryIsAppliedAtOnce() = runWithViewModel { viewModel ->
+        viewModel.onQueryChange("to")
+        letSearchSettle()
+
+        viewModel.clearQuery()
+
+        assertEquals("", viewModel.uiState.value.query)
+        assertEquals(6, viewModel.uiState.value.words.size)
     }
 }

@@ -55,6 +55,7 @@ import com.wortart.app.ui.components.ChoiceQuestionView
 import com.wortart.app.ui.components.LevelBadge
 import com.wortart.app.ui.components.LevelFilterRow
 import com.wortart.app.ui.theme.WortArtColors
+import com.wortart.app.ui.theme.WortArtFonts
 
 /**
  * The "Lessons" part of the Rules tab: grammar lessons in English and Bengali with a level
@@ -212,6 +213,7 @@ private fun LessonCard(
                     text = lesson.title.de,
                     color = WortArtColors.TextPrimary,
                     fontSize = 18.sp,
+                    fontFamily = WortArtFonts.Serif,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(

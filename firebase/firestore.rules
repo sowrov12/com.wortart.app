@@ -1,0 +1,80 @@
+rules_version = '2';
+
+// Paste this file into Firebase console > Firestore Database > Rules, then Publish.
+// The app checks isAdmin only to show buttons; THESE RULES are what actually protect the data.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // One document per user: users/{uid}
+    match /users/{uid} {
+      // You can read your own profile; admins can read any profile (user search).
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+
+      // A new profile is always a free, non-admin profile. Nobody can create themselves as
+      // premium or admin.
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.uid == uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.isPremium == false
+        && request.resource.data.isAdmin == false
+        && request.resource.data.totalReferrals == 0
+        && request.resource.data.get('membershipExpiry', null) == null;
+
+      // Only admins change memberships, referral counts or admin flags.
+      allow update: if isAdmin();
+
+      // Everyone may delete their own profile (account deletion).
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
+
+    // Lets a friend look up who owns an invite code: referralCodes/{code}
+    match /referralCodes/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && code.matches('^[A-HJ-NP-Z2-9]{8}$')
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email;
+      allow update: if false;
+      allow delete: if signedIn() && (resource == null || resource.data.uid == request.auth.uid);
+    }
+
+    // One invitation per friend: invitations/{friendUid}
+    match /invitations/{friendUid} {
+      // A friend enters an invite code. The invitation always starts as "pending".
+      allow create: if signedIn()
+        && request.auth.uid == friendUid
+        && request.resource.data.friendUid == friendUid
+        && request.resource.data.friendEmail == request.auth.token.email
+        && request.resource.data.inviterUid != friendUid
+        && request.resource.data.status == 'pending';
+
+      // The friend sees their own invitation; admins see all (admin panel).
+      allow read: if signedIn() && (request.auth.uid == friendUid || isAdmin());
+
+      // Admins approve or reject. The friend may only refresh the "cards answered" number
+      // of a pending invitation; nothing else, and never the status.
+      allow update: if isAdmin()
+        || (signedIn()
+            && request.auth.uid == friendUid
+            && resource.data.status == 'pending'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['friendCardsPlayed']));
+
+      // The friend can remove their own invitation (to try another code, or when deleting
+      // the account). Admins can remove any.
+      allow delete: if isAdmin() || (signedIn() && request.auth.uid == friendUid);
+    }
+  }
+}

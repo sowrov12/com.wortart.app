@@ -3,11 +3,11 @@ package com.wortart.app.ui.explore
 import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.wortart.app.data.local.entity.VocabEntity
@@ -23,28 +23,46 @@ class ExploreScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private val kochen = VocabEntity(
-        id = "rv3",
-        word = "kochen",
-        category = "regular_verb",
-        level = "A1",
-        topic = "Food",
-        translationEn = "to cook",
-        translationBn = "রান্না করা",
-        exampleDe = "Ich koche.",
-        exampleEn = "I cook.",
-        exampleBn = "আমি রান্না করি।",
-        auxiliary = "haben",
+    private fun word(id: String, word: String, topic: String, en: String, bn: String, isFavorite: Boolean = false) =
+        VocabEntity(
+            id = id,
+            word = word,
+            category = "regular_verb",
+            level = "A1",
+            topic = topic,
+            translationEn = en,
+            translationBn = bn,
+            exampleDe = "de",
+            exampleEn = "en",
+            exampleBn = "bn",
+            auxiliary = "haben",
+            isFavorite = isFavorite,
+        )
+
+    private val kochen = word("rv3", "kochen", "Food", "to cook", "রান্না করা")
+    private val arbeiten = word("rv5", "arbeiten", "Career", "to work", "কাজ করা")
+
+    private val topics = listOf(
+        TopicSummary("Food", 2),
+        TopicSummary("Career", 1),
+        TopicSummary("Travel", 0),
     )
 
-    private val topicsState = ExploreUiState(
-        destination = ExploreDestination.Topics,
-        topics = listOf(
-            TopicSummary("Food", 2),
-            TopicSummary("Career", 1),
-            TopicSummary("Health", 3),
-            TopicSummary("Travel", 0),
-        ),
+    private fun state(
+        words: List<VocabEntity> = listOf(kochen, arbeiten),
+        level: String? = null,
+        topic: String? = null,
+        favoritesOnly: Boolean = false,
+        query: String = "",
+        isLoaded: Boolean = true,
+    ) = ExploreUiState(
+        level = level,
+        topic = topic,
+        favoritesOnly = favoritesOnly,
+        query = query,
+        topics = topics,
+        words = words,
+        isLoaded = isLoaded,
     )
 
     private fun show(
@@ -52,8 +70,10 @@ class ExploreScreenTest {
         query: String = state.query,
         onQueryChange: (String) -> Unit = {},
         onSelectLevel: (String?) -> Unit = {},
-        onOpenTopic: (String?) -> Unit = {},
-        onCloseTopic: () -> Unit = {},
+        onSelectTopic: (String?) -> Unit = {},
+        onToggleFavoritesOnly: () -> Unit = {},
+        onClearFilters: () -> Unit = {},
+        onOpenWord: (String) -> Unit = {},
         onToggleFavorite: (VocabEntity) -> Unit = {},
     ) {
         composeRule.setContent {
@@ -63,127 +83,62 @@ class ExploreScreenTest {
                     query = query,
                     onQueryChange = onQueryChange,
                     onSelectLevel = onSelectLevel,
-                    onOpenTopic = onOpenTopic,
-                    onCloseTopic = onCloseTopic,
+                    onSelectTopic = onSelectTopic,
+                    onToggleFavoritesOnly = onToggleFavoritesOnly,
+                    onClearFilters = onClearFilters,
+                    onOpenWord = onOpenWord,
                     onToggleFavorite = onToggleFavorite,
                 )
             }
         }
     }
 
+    // ---- Layout ----
+
     @Test
-    fun gridShowsTopicsWithWordCounts() {
-        show(topicsState)
+    fun showsTheSearchLevelChipsCategoriesAndWords() {
+        show(state())
 
         composeRule.onNodeWithText("Explore").assertExists()
-        composeRule.onNodeWithText("All words").assertExists()
-        composeRule.onNodeWithText("6 words").assertExists()
+        composeRule.onNodeWithText("Search words…").assertExists()
+        listOf("All", "A2", "B1", "B2").forEach { composeRule.onNodeWithText(it).assertExists() }
+
+        composeRule.onNodeWithText("Categories").assertExists()
         composeRule.onNodeWithText("Food").assertExists()
-        composeRule.onNodeWithText("2 words").assertExists()
+        composeRule.onNodeWithText("(2)").assertExists()
         composeRule.onNodeWithText("Career").assertExists()
-        composeRule.onNodeWithText("1 word").assertExists()
-        composeRule.onNodeWithText("Health").assertExists()
-        composeRule.onNodeWithText("3 words").assertExists()
-    }
+        composeRule.onNodeWithText("(1)").assertExists()
 
-    @Test
-    fun levelChipsAreShownAndReportTheTappedLevel() {
-        val selected = mutableListOf<String?>()
-        show(topicsState, onSelectLevel = { selected += it })
-
-        listOf("All", "A1", "A2", "B1", "B2").forEach {
-            composeRule.onNodeWithText(it).assertExists()
-        }
-
-        composeRule.onNodeWithText("B1").performClick()
-        composeRule.onNodeWithText("All").performClick()
-
-        composeRule.runOnIdle { assertEquals(listOf<String?>("B1", null), selected) }
-    }
-
-    @Test
-    fun tappingATopicOrAllWordsOpensIt() {
-        val opened = mutableListOf<String?>()
-        show(topicsState, onOpenTopic = { opened += it })
-
-        composeRule.onNodeWithText("Food").performClick()
-        composeRule.onNodeWithText("All words").performClick()
-
-        composeRule.runOnIdle { assertEquals(listOf<String?>("Food", null), opened) }
-    }
-
-    @Test
-    fun topicWithoutWordsCannotBeOpened() {
-        val opened = mutableListOf<String?>()
-        show(topicsState, onOpenTopic = { opened += it })
-
-        composeRule.onNodeWithText("Travel").performClick()
-
-        composeRule.runOnIdle { assertEquals(emptyList<String?>(), opened) }
-    }
-
-    @Test
-    fun wordListShowsWordsAndSupportsBackAndFavorite() {
-        var backCount = 0
-        var favorited: VocabEntity? = null
-        show(
-            state = ExploreUiState(
-                destination = ExploreDestination.Words("Food"),
-                topics = topicsState.topics,
-                words = listOf(kochen),
-            ),
-            onCloseTopic = { backCount++ },
-            onToggleFavorite = { favorited = it },
-        )
-
-        composeRule.onNodeWithText("Food").assertExists()
-        composeRule.onNodeWithText("1 word").assertExists()
+        composeRule.onNodeWithText("Words (2)").assertExists()
         composeRule.onNodeWithText("kochen").assertExists()
-        composeRule.onNodeWithText("Verb | Regular").assertExists()
-        composeRule.onNodeWithText("to cook").assertExists()
-        composeRule.onNodeWithText("রান্না করা").assertExists()
-        // Level chip "A1" and the badge on the row both show "A1".
-        assertEquals(2, composeRule.onAllNodesWithText("A1").fetchSemanticsNodes().size)
-
-        composeRule.onNodeWithContentDescription("Add to favorites").performClick()
-        composeRule.onNodeWithText("‹ Topics").performClick()
-
-        composeRule.runOnIdle {
-            assertEquals(kochen, favorited)
-            assertEquals(1, backCount)
-        }
+        composeRule.onNodeWithText("to cook | রান্না করা").assertExists()
+        composeRule.onNodeWithText("arbeiten").assertExists()
     }
 
     @Test
-    fun emptyWordListShowsAMessage() {
-        show(ExploreUiState(destination = ExploreDestination.Words("Food"), topics = topicsState.topics))
+    fun withFiltersTheListIsCalledResults() {
+        show(state(level = "A1", words = listOf(kochen)))
 
-        composeRule.onNodeWithText("No words found.").assertExists()
+        composeRule.onNodeWithText("Results (1)").assertExists()
+        composeRule.onNodeWithText("Words (1)").assertDoesNotExist()
     }
 
     // ---- Search ----
 
     @Test
-    fun searchFieldShowsPlaceholderAndReportsTyping() {
+    fun typingInTheSearchFieldIsReported() {
         val typed = mutableListOf<String>()
-        show(topicsState, onQueryChange = { typed += it })
+        show(state(), onQueryChange = { typed += it })
 
-        composeRule.onNodeWithText("Search German, English or Bengali").assertExists()
         composeRule.onNodeWithTag("searchField").performTextInput("kochen")
 
         composeRule.runOnIdle { assertEquals(listOf("kochen"), typed) }
     }
 
     @Test
-    fun clearButtonIsHiddenWhileTheFieldIsEmpty() {
-        show(topicsState, query = "")
-        composeRule.onNodeWithContentDescription("Clear search").assertDoesNotExist()
-    }
-
-    @Test
-    fun clearButtonResetsTheQuery() {
+    fun theClearButtonOnlyAppearsWithTextAndEmptiesTheField() {
         val typed = mutableListOf<String>()
-        show(topicsState.copy(query = "abc"), query = "abc", onQueryChange = { typed += it })
+        show(state(query = "ko"), query = "ko", onQueryChange = { typed += it })
 
         composeRule.onNodeWithContentDescription("Clear search").performClick()
 
@@ -191,33 +146,129 @@ class ExploreScreenTest {
     }
 
     @Test
-    fun searchResultsReplaceTheTopicGrid() {
-        show(
-            ExploreUiState(
-                destination = ExploreDestination.Topics,
-                query = "cook",
-                topics = topicsState.topics,
-                words = listOf(kochen),
-            ),
-        )
+    fun withoutTextThereIsNoClearButton() {
+        show(state(), query = "")
 
-        composeRule.onNodeWithText("Search results").assertExists()
-        composeRule.onNodeWithText("1 word").assertExists()
-        composeRule.onNodeWithText("kochen").assertExists()
-        composeRule.onNodeWithText("All words").assertDoesNotExist()
-        composeRule.onNodeWithText("‹ Topics").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription("Clear search").assertDoesNotExist()
+    }
+
+    // ---- Filters ----
+
+    @Test
+    fun levelChipsReportTheTappedLevel() {
+        val picked = mutableListOf<String?>()
+        show(state(), onSelectLevel = { picked += it })
+
+        composeRule.onNodeWithText("B1").performClick()
+        composeRule.onNodeWithText("All").performClick()
+
+        composeRule.runOnIdle { assertEquals(listOf<String?>("B1", null), picked) }
     }
 
     @Test
-    fun searchWithoutMatchesNamesTheQuery() {
-        show(
-            ExploreUiState(
-                destination = ExploreDestination.Topics,
-                query = "xyz",
-                topics = topicsState.topics,
-            ),
-        )
+    fun categoryCardsReportTheTappedCategory() {
+        val picked = mutableListOf<String?>()
+        show(state(), onSelectTopic = { picked += it })
 
-        composeRule.onNodeWithText("No results for “xyz”.").assertExists()
+        composeRule.onNodeWithText("Food").performClick()
+
+        composeRule.runOnIdle { assertEquals(listOf<String?>("Food"), picked) }
+    }
+
+    @Test
+    fun aCategoryWithoutWordsCannotBePicked() {
+        val picked = mutableListOf<String?>()
+        show(state(), onSelectTopic = { picked += it })
+
+        composeRule.onNodeWithText("Travel").performClick()
+
+        composeRule.runOnIdle { assertEquals(emptyList<String?>(), picked) }
+    }
+
+    @Test
+    fun theSelectedCategoryCanBePickedAgainToClearIt() {
+        val picked = mutableListOf<String?>()
+        show(state(topic = "Travel"), onSelectTopic = { picked += it })
+
+        composeRule.onNodeWithText("Travel").performClick()
+
+        composeRule.runOnIdle { assertEquals(listOf<String?>("Travel"), picked) }
+    }
+
+    @Test
+    fun theHeartButtonTogglesFavoritesOnly() {
+        var toggles = 0
+        show(state(), onToggleFavoritesOnly = { toggles++ })
+
+        composeRule.onNodeWithContentDescription("Show favorites only").performClick()
+
+        composeRule.runOnIdle { assertEquals(1, toggles) }
+    }
+
+    @Test
+    fun clearFiltersAppearsWithFiltersAndResetsThem() {
+        var clears = 0
+        show(state(level = "A1"), onClearFilters = { clears++ })
+
+        composeRule.onNodeWithText("Clear filters").performClick()
+
+        composeRule.runOnIdle { assertEquals(1, clears) }
+    }
+
+    @Test
+    fun withoutFiltersThereIsNothingToClear() {
+        show(state())
+
+        composeRule.onNodeWithText("Clear filters").assertDoesNotExist()
+    }
+
+    // ---- Empty states ----
+
+    @Test
+    fun noMatchesShowAMessageAndOfferToClearTheFilters() {
+        var clears = 0
+        show(state(words = emptyList(), query = "zzz"), query = "zzz", onClearFilters = { clears++ })
+
+        composeRule.onNodeWithText("No words found").performScrollTo().assertExists()
+        composeRule.onNodeWithText("Try another search or remove a filter.").assertExists()
+        composeRule.onNodeWithText("Clear filters").performClick()
+
+        composeRule.runOnIdle { assertEquals(1, clears) }
+    }
+
+    @Test
+    fun anEmptyVocabularyExplainsWhy() {
+        show(state(words = emptyList()))
+
+        composeRule.onNodeWithText("The vocabulary is still loading.").performScrollTo().assertExists()
+    }
+
+    @Test
+    fun nothingIsShownAsEmptyBeforeTheFirstResult() {
+        show(state(words = emptyList(), isLoaded = false))
+
+        composeRule.onNodeWithText("No words found").assertDoesNotExist()
+    }
+
+    // ---- Words ----
+
+    @Test
+    fun tappingAWordOpensItsDetails() {
+        val opened = mutableListOf<String>()
+        show(state(), onOpenWord = { opened += it })
+
+        composeRule.onNodeWithText("kochen").performClick()
+
+        composeRule.runOnIdle { assertEquals(listOf("rv3"), opened) }
+    }
+
+    @Test
+    fun theHeartOfAWordTogglesItsFavorite() {
+        var toggled: VocabEntity? = null
+        show(state(words = listOf(kochen)), onToggleFavorite = { toggled = it })
+
+        composeRule.onNodeWithContentDescription("Add to favorites").performClick()
+
+        composeRule.runOnIdle { assertEquals(kochen, toggled) }
     }
 }
