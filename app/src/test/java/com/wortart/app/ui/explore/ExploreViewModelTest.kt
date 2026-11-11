@@ -342,4 +342,23 @@ class ExploreViewModelTest {
         assertEquals("", viewModel.uiState.value.query)
         assertEquals(6, viewModel.uiState.value.words.size)
     }
+
+    @Test
+    fun showFavoritesClearsEveryOtherFilterAndListsOnlyTheFavorites() = runWithViewModel { viewModel ->
+        viewModel.toggleFavorite(kochen)
+        viewModel.selectLevel("B1")
+        viewModel.selectTopic("Career")
+        viewModel.onQueryChange("zzz")
+        letSearchSettle()
+
+        viewModel.showFavorites()
+
+        val state = viewModel.uiState.value
+        assertTrue(state.favoritesOnly)
+        assertNull(state.level)
+        assertNull(state.topic)
+        assertEquals("", viewModel.query.value)
+        assertEquals("", state.query)
+        assertEquals(listOf("kochen"), state.ids())
+    }
 }

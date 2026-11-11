@@ -51,10 +51,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wortart.app.data.local.entity.VocabEntity
 import com.wortart.app.domain.question.shortMeaning
+import com.wortart.app.ui.components.EmptyState
 import com.wortart.app.ui.components.FavoriteButton
 import com.wortart.app.ui.components.LevelBadge
 import com.wortart.app.ui.components.LevelFilterRow
-import com.wortart.app.ui.components.OutlineButton
 import com.wortart.app.ui.theme.WortArtColors
 import com.wortart.app.ui.theme.WortArtFonts
 
@@ -166,7 +166,19 @@ fun ExploreScreen(
         }
 
         if (state.isLoaded && state.words.isEmpty()) {
-            item { EmptyState(hasFilters = state.hasFilters, onClearFilters = onClearFilters) }
+            item {
+                EmptyState(
+                    emoji = "🔍",
+                    title = "No words found",
+                    message = if (state.hasFilters) {
+                        "Try another search or remove a filter."
+                    } else {
+                        "The vocabulary is still loading."
+                    },
+                    actionLabel = if (state.hasFilters) "Clear filters" else null,
+                    onAction = if (state.hasFilters) onClearFilters else null,
+                )
+            }
         } else {
             items(state.words, key = { it.id }) { word ->
                 WordRow(
@@ -298,41 +310,6 @@ private fun ResultsHeader(title: String, count: Int, showClear: Boolean, onClear
             TextButton(onClick = onClear) {
                 Text(text = "Clear filters", color = WortArtColors.Gold, fontWeight = FontWeight.Medium)
             }
-        }
-    }
-}
-
-@Composable
-private fun EmptyState(hasFilters: Boolean, onClearFilters: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Text(text = "🔍", fontSize = 36.sp)
-        Text(
-            text = "No words found",
-            color = WortArtColors.TextPrimary,
-            fontSize = 18.sp,
-            fontFamily = WortArtFonts.Serif,
-            fontWeight = FontWeight.SemiBold,
-        )
-        if (hasFilters) {
-            Text(
-                text = "Try another search or remove a filter.",
-                color = WortArtColors.TextSecondary,
-                fontSize = 14.sp,
-                textAlign = TextAlign.Center,
-            )
-            OutlineButton(text = "Clear filters", onClick = onClearFilters)
-        } else {
-            Text(
-                text = "The vocabulary is still loading.",
-                color = WortArtColors.TextSecondary,
-                fontSize = 14.sp,
-            )
         }
     }
 }

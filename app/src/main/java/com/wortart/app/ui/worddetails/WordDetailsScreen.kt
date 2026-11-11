@@ -33,10 +33,12 @@ import com.wortart.app.domain.rules.RuleBlock
 import com.wortart.app.domain.word.DetailSection
 import com.wortart.app.domain.word.WordDetailsContent
 import com.wortart.app.ui.components.AudioButton
+import com.wortart.app.ui.components.EmptyState
 import com.wortart.app.ui.components.ExampleBox
 import com.wortart.app.ui.components.FavoriteButton
 import com.wortart.app.ui.components.GoldButton
 import com.wortart.app.ui.components.LevelBadge
+import com.wortart.app.ui.components.LoadingState
 import com.wortart.app.ui.components.OutlineButton
 import com.wortart.app.ui.components.WortArtTopBar
 import com.wortart.app.ui.rules.RuleTableView
@@ -91,25 +93,14 @@ fun WordDetailsScreen(
         )
 
         when {
-            state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = WortArtColors.Gold)
-            }
+            state.isLoading -> LoadingState(modifier = Modifier.weight(1f))
 
-            card == null || content == null -> Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterVertically),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = "This word could not be found.",
-                    color = WortArtColors.TextSecondary,
-                    fontSize = 16.sp,
-                    textAlign = TextAlign.Center,
-                )
-                OutlineButton(text = "Go back", onClick = onBack)
-            }
+            card == null || content == null -> EmptyState(
+                title = "This word could not be found.",
+                actionLabel = "Go back",
+                onAction = onBack,
+                modifier = Modifier.weight(1f),
+            )
 
             else -> {
                 WordBody(

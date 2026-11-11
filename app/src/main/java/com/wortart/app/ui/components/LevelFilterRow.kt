@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,6 +29,7 @@ fun PillChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Mo
     val shape = RoundedCornerShape(50)
     Box(
         modifier = modifier
+            .minimumInteractiveComponentSize()
             .clip(shape)
             .background(if (selected) WortArtColors.Gold else Color.Transparent)
             .border(

@@ -14,6 +14,9 @@ data class StatsSummary(
     val successPercent: Int = 0,
     val practiceTimeSeconds: Long = 0L,
     val perfectPronunciations: Int = 0,
+    /** Answers per day for the last 7 days, oldest first. */
+    val weeklyActivity: List<DayActivity> = emptyList(),
+    val achievements: List<Achievement> = emptyList(),
 ) {
     val practiceTimeLabel: String get() = formatPracticeTime(practiceTimeSeconds)
 }

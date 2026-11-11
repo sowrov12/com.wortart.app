@@ -22,6 +22,16 @@ data class SpeechState(
     val speakingId: String? = null,
 )
 
+/** Whether pronunciation will work without a connection. */
+enum class VoiceStatus { CHECKING, READY, MISSING }
+
+/** READY once a German voice is installed; MISSING when there is no German voice or no speech engine. */
+fun SpeechState.voiceStatus(): VoiceStatus = when (status) {
+    SpeechStatus.INITIALIZING -> VoiceStatus.CHECKING
+    SpeechStatus.READY -> VoiceStatus.READY
+    SpeechStatus.GERMAN_UNAVAILABLE, SpeechStatus.ERROR -> VoiceStatus.MISSING
+}
+
 /** What the UI should do when the audio button of a card is tapped. */
 enum class PronunciationAction { SPEAK, STOP, GERMAN_VOICE_MISSING, UNAVAILABLE }
 

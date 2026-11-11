@@ -24,10 +24,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.wortart.app.ui.components.EmptyState
 import com.wortart.app.ui.components.FavoriteButton
 import com.wortart.app.ui.components.FlashcardView
 import com.wortart.app.ui.components.GoldButton
 import com.wortart.app.ui.components.GoldProgressBar
+import com.wortart.app.ui.components.LoadingState
 import com.wortart.app.ui.components.OutlineButton
 import com.wortart.app.ui.components.WortArtTopBar
 import com.wortart.app.ui.theme.WortArtColors
@@ -78,34 +80,18 @@ fun PracticeScreen(
         when (state.status) {
             PracticeStatus.LOADING -> {
                 WortArtTopBar(title = "Flashcards", onBack = onBack)
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = WortArtColors.Gold)
-                }
+                LoadingState(modifier = Modifier.weight(1f))
             }
 
             PracticeStatus.EMPTY -> {
                 WortArtTopBar(title = "Flashcards", onBack = onBack)
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterVertically),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        text = "No flashcards yet",
-                        color = WortArtColors.TextPrimary,
-                        fontSize = 20.sp,
-                        fontFamily = WortArtFonts.Serif,
-                    )
-                    Text(
-                        text = "The vocabulary is still loading. Try again in a moment.",
-                        color = WortArtColors.TextSecondary,
-                        fontSize = 15.sp,
-                        textAlign = TextAlign.Center,
-                    )
-                    OutlineButton(text = "Try again", onClick = onRestart)
-                }
+                EmptyState(
+                    title = "No flashcards yet",
+                    message = "The vocabulary is still loading. Try again in a moment.",
+                    actionLabel = "Try again",
+                    onAction = onRestart,
+                    modifier = Modifier.weight(1f),
+                )
             }
 
             PracticeStatus.ACTIVE -> ActiveSession(

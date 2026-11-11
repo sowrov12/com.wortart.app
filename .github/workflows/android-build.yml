@@ -39,6 +39,17 @@ jobs:
         if: always()
         run: python3 .github/scripts/summarize.py build build.log "${{ steps.build.outcome }}"
 
+      - name: Android Lint
+        id: lint
+        if: steps.build.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: gradle lintDebug --console=plain 2>&1 | tee lint.log
+
+      - name: Write lint summary
+        if: steps.build.outcome == 'success'
+        run: python3 .github/scripts/summarize.py lint lint.log "${{ steps.lint.outcome }}"
+
       - name: Upload APK
         if: steps.build.outcome == 'success'
         uses: actions/upload-artifact@v4
@@ -53,5 +64,7 @@ jobs:
           name: build-log
           path: |
             build.log
+            lint.log
             app/build/reports/tests/
+            app/build/reports/lint-results-debug.html
           if-no-files-found: ignore

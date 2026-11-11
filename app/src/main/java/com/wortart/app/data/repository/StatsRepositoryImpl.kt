@@ -2,6 +2,8 @@ package com.wortart.app.data.repository
 
 import com.wortart.app.data.local.dao.UserStatsDao
 import com.wortart.app.data.local.entity.UserStats
+import com.wortart.app.domain.stats.ActivityLog
+import com.wortart.app.domain.stats.NoActivityLog
 import com.wortart.app.domain.stats.StatsCalculator
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -16,6 +18,7 @@ import java.time.LocalDate
 
 class StatsRepositoryImpl(
     private val dao: UserStatsDao,
+    private val activityLog: ActivityLog = NoActivityLog,
     private val todayEpochDay: () -> Long = { LocalDate.now().toEpochDay() },
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : StatsRepository {
@@ -26,8 +29,14 @@ class StatsRepositoryImpl(
     override fun observeStats(): Flow<UserStats> =
         dao.observe().map { it ?: UserStats() }.distinctUntilChanged().flowOn(ioDispatcher)
 
-    override suspend fun recordAnswer(isCorrect: Boolean) =
-        update { StatsCalculator.afterAnswer(it, isCorrect, todayEpochDay()) }
+    override suspend fun recordAnswer(isCorrect: Boolean) {
+        val day = todayEpochDay()
+        update { stats ->
+            // Logged before the stats are saved, so the weekly chart is current when they change.
+            activityLog.recordAnswer(day)
+            StatsCalculator.afterAnswer(stats, isCorrect, day)
+        }
+    }
 
     override suspend fun addPracticeTime(seconds: Long) =
         update { StatsCalculator.afterPracticeTime(it, seconds) }

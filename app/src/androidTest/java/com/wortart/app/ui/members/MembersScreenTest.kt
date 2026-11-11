@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.wortart.app.audio.VoiceStatus
 import com.wortart.app.data.auth.AuthUser
 import com.wortart.app.domain.membership.Invitation
 import com.wortart.app.domain.membership.InvitationStatus
@@ -64,6 +65,10 @@ class MembersScreenTest {
     private fun show(
         state: MembersUiState,
         supportEmail: String = "",
+        favoritesCount: Int = 0,
+        voiceStatus: VoiceStatus = VoiceStatus.READY,
+        onOpenFavorites: () -> Unit = {},
+        onFixVoice: () -> Unit = {},
         onSignIn: () -> Unit = {},
         onSignOut: () -> Unit = {},
         onDeleteAccount: () -> Unit = {},
@@ -79,6 +84,11 @@ class MembersScreenTest {
             WortArtTheme {
                 MembersScreen(
                     state = state,
+                    favoritesCount = favoritesCount,
+                    voiceStatus = voiceStatus,
+                    appVersion = "1.0",
+                    onOpenFavorites = onOpenFavorites,
+                    onFixVoice = onFixVoice,
                     onSignIn = onSignIn,
                     onSignOut = onSignOut,
                     onDeleteAccount = onDeleteAccount,
@@ -101,7 +111,7 @@ class MembersScreenTest {
     fun withoutFirebaseTheScreenExplainsTheSetup() {
         show(MembersUiState(isConfigured = false))
 
-        composeRule.onNodeWithText("Member Access").assertExists()
+        composeRule.onNodeWithText("Profile").assertExists()
         composeRule.onNodeWithText("Accounts are not set up yet").assertExists()
         composeRule.onNodeWithText("Sign in with Google").assertDoesNotExist()
     }
@@ -113,7 +123,7 @@ class MembersScreenTest {
 
         composeRule.onNodeWithText("Member benefits").assertExists()
         MemberBenefits.ALL.forEach { composeRule.onNodeWithText(it).assertExists() }
-        composeRule.onNodeWithText("Sign out").assertDoesNotExist()
+        composeRule.onNodeWithText("Logout").assertDoesNotExist()
         composeRule.onNodeWithText("Invite friends").assertDoesNotExist()
         composeRule.onNodeWithContentDescription("More options").assertDoesNotExist()
 
@@ -133,7 +143,7 @@ class MembersScreenTest {
         composeRule.onNodeWithText("me@example.com").assertExists()
         composeRule.onNodeWithText("No active membership").assertExists()
 
-        composeRule.onNodeWithText("Sign out").performScrollTo().performClick()
+        composeRule.onNodeWithText("Logout").performScrollTo().performClick()
 
         composeRule.runOnIdle { assertEquals(1, signOuts) }
     }
@@ -321,5 +331,121 @@ class MembersScreenTest {
         show(MembersUiState(user = AuthUser("u1", "me@example.com"), isLoadingProfile = true))
 
         composeRule.onNodeWithText("Setting up your account…").assertExists()
+    }
+
+    // ---- Profile card ----
+
+    @Test
+    fun aFreeUserSeesTheFreeBadgeAndNoCrown() {
+        show(signedIn())
+
+        composeRule.onNodeWithText("Free").assertExists()
+        composeRule.onNodeWithText("Premium").assertDoesNotExist()
+        composeRule.onNodeWithText("👑").assertDoesNotExist()
+    }
+
+    @Test
+    fun anActiveMemberSeesThePremiumBadgeAndTheCrown() {
+        show(signedIn(statusText = "Premium member · until 23 Jan 2027 (8 days left)", isMemberActive = true))
+
+        composeRule.onNodeWithText("Premium").assertExists()
+        composeRule.onNodeWithText("👑").assertExists()
+    }
+
+    @Test
+    fun theAvatarShowsTheFirstLetterOfTheName() {
+        show(signedIn(displayName = "sowrov hin"))
+
+        composeRule.onNodeWithText("S").assertExists()
+    }
+
+    // ---- Settings list ----
+
+    @Test
+    fun theFavoritesRowShowsTheCountAndOpensTheFavorites() {
+        var opened = 0
+        show(signedIn(), favoritesCount = 12, onOpenFavorites = { opened++ })
+
+        composeRule.onNodeWithText("Favorites (12)").performScrollTo().performClick()
+
+        composeRule.runOnIdle { assertEquals(1, opened) }
+    }
+
+    @Test
+    fun theFavoritesRowIsAlsoThereWhenSignedOut() {
+        show(MembersUiState(), favoritesCount = 3)
+
+        composeRule.onNodeWithText("Favorites (3)").performScrollTo().assertExists()
+    }
+
+    @Test
+    fun theOfflineRowExplainsThatEverythingIsOnTheDevice() {
+        show(signedIn())
+
+        composeRule.onNodeWithText("Offline mode").performScrollTo().assertExists()
+        composeRule.onNodeWithText("All set for offline! Words, rules and progress are stored on this device.")
+            .assertExists()
+    }
+
+    @Test
+    fun anInstalledGermanVoiceIsReported() {
+        show(signedIn(), voiceStatus = VoiceStatus.READY)
+
+        composeRule.onNodeWithText("Ready for pronunciation without internet.").performScrollTo().assertExists()
+    }
+
+    @Test
+    fun theVoiceIsBeingChecked() {
+        show(signedIn(), voiceStatus = VoiceStatus.CHECKING)
+
+        composeRule.onNodeWithText("Checking…").performScrollTo().assertExists()
+    }
+
+    @Test
+    fun aMissingGermanVoiceCanBeInstalledFromTheProfile() {
+        var fixes = 0
+        show(signedIn(), voiceStatus = VoiceStatus.MISSING, onFixVoice = { fixes++ })
+
+        composeRule.onNodeWithText("Not installed. Tap to install it for offline audio.")
+            .performScrollTo()
+            .performClick()
+
+        composeRule.runOnIdle { assertEquals(1, fixes) }
+    }
+
+    @Test
+    fun supportAndFeedbackOnlyAppearsWithASupportEmail() {
+        show(signedIn(), supportEmail = "")
+        composeRule.onNodeWithText("Support & Feedback").assertDoesNotExist()
+    }
+
+    @Test
+    fun supportAndFeedbackOpensTheMailApp() {
+        var contacts = 0
+        show(signedIn(), supportEmail = "help@example.com", onContactSupport = { contacts++ })
+
+        composeRule.onNodeWithText("Support & Feedback").performScrollTo().performClick()
+
+        composeRule.runOnIdle { assertEquals(1, contacts) }
+    }
+
+    @Test
+    fun aboutAppShowsTheVersion() {
+        show(signedIn())
+
+        composeRule.onNodeWithText("About App").performScrollTo().performClick()
+
+        composeRule.onNodeWithText("Version 1.0").assertExists()
+        composeRule.onNodeWithText("German Grammar & Vocab Master").assertExists()
+
+        composeRule.onNodeWithText("Close").performClick()
+        composeRule.onNodeWithText("Version 1.0").assertDoesNotExist()
+    }
+
+    @Test
+    fun logoutIsOnlyOfferedWhenSignedIn() {
+        show(MembersUiState())
+
+        composeRule.onNodeWithText("Logout").assertDoesNotExist()
     }
 }

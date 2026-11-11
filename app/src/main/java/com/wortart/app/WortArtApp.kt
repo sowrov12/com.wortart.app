@@ -12,6 +12,8 @@ import com.wortart.app.data.local.LocalDataResetter
 import com.wortart.app.data.local.WortArtDatabase
 import com.wortart.app.data.membership.MembershipRepository
 import com.wortart.app.data.remote.AdminRepository
+import com.wortart.app.data.stats.PrefsActivityLog
+import com.wortart.app.domain.stats.ActivityLog
 import com.wortart.app.data.remote.FirestoreAdminRepository
 import com.wortart.app.data.remote.FirestoreInvitationRepository
 import com.wortart.app.data.remote.FirestoreUserRepository
@@ -44,7 +46,9 @@ class WortArtApp : Application() {
 
     val vocabRepository: VocabRepository by lazy { VocabRepositoryImpl(database.vocabDao()) }
 
-    val statsRepository: StatsRepository by lazy { StatsRepositoryImpl(database.userStatsDao()) }
+    val activityLog: ActivityLog by lazy { PrefsActivityLog(this) }
+
+    val statsRepository: StatsRepository by lazy { StatsRepositoryImpl(database.userStatsDao(), activityLog) }
 
     /** False until app/google-services.json is added (see docs/FIREBASE_SETUP.md). */
     val firebaseConfigured: Boolean by lazy { FirebaseApp.getApps(this).isNotEmpty() }
@@ -85,7 +89,11 @@ class WortArtApp : Application() {
 
     /** Clears favorites and statistics on this device and reloads the bundled words. */
     val localDataResetter: LocalDataResetter by lazy {
-        LocalDataResetter(database, reseed = { VocabSeeder(this, database).seedIfNeeded() })
+        LocalDataResetter(
+            database,
+            reseed = { VocabSeeder(this, database).seedIfNeeded() },
+            clearLocalState = { activityLog.clear() },
+        )
     }
 
     override fun onCreate() {

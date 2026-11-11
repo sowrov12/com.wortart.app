@@ -113,6 +113,14 @@ class ExploreViewModel(private val repository: VocabRepository) : ViewModel() {
         favoritesOnly.value = false
     }
 
+    /** Shows only the favorite words: clears every other filter and the search text. */
+    fun showFavorites() {
+        rawQuery.value = ""
+        level.value = null
+        topic.value = null
+        favoritesOnly.value = true
+    }
+
     fun toggleFavorite(card: VocabEntity) {
         viewModelScope.launch { repository.setFavorite(card.id, !card.isFavorite) }
     }

@@ -7,6 +7,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.wortart.app.data.local.WortArtDatabase
 import com.wortart.app.data.local.dao.UserStatsDao
 import com.wortart.app.data.local.entity.UserStats
+import com.wortart.app.domain.stats.ActivityHistory
+import com.wortart.app.domain.stats.ActivityLog
+import com.wortart.app.domain.stats.DayActivity
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -24,6 +27,16 @@ class StatsRepositoryTest {
     private lateinit var dao: UserStatsDao
     private lateinit var repository: StatsRepository
     private var today = 20_000L
+
+    private class RecordingLog : ActivityLog {
+        val history = mutableMapOf<Long, Int>()
+        override fun recordAnswer(day: Long) {
+            history[day] = (history[day] ?: 0) + 1
+        }
+        override fun lastDays(today: Long, days: Int): List<DayActivity> =
+            ActivityHistory.lastDays(history, today, days)
+        override fun clear() = history.clear()
+    }
 
     @Before
     fun setUp() {
@@ -102,5 +115,28 @@ class StatsRepositoryTest {
         assertEquals(50, stats.cardsPlayed)
         assertEquals(100L, stats.practiceTimeSeconds)
         assertEquals(1f, stats.successRate, 0.0001f)
+    }
+
+    @Test
+    fun everyAnswerIsAddedToTheDailyActivityLog() = runTest {
+        val log = RecordingLog()
+        val repositoryWithLog = StatsRepositoryImpl(dao, log, todayEpochDay = { today })
+
+        repositoryWithLog.recordAnswer(true)
+        repositoryWithLog.recordAnswer(false)
+        today += 1
+        repositoryWithLog.recordAnswer(true)
+
+        assertEquals(mapOf(20_000L to 2, 20_001L to 1), log.history)
+    }
+
+    @Test
+    fun practiceTimeDoesNotCountAsAnAnswerInTheLog() = runTest {
+        val log = RecordingLog()
+        val repositoryWithLog = StatsRepositoryImpl(dao, log, todayEpochDay = { today })
+
+        repositoryWithLog.addPracticeTime(60)
+
+        assertEquals(emptyMap<Long, Int>(), log.history)
     }
 }

@@ -9,15 +9,18 @@ import kotlinx.coroutines.withContext
  * vocabulary. Used when an account is deleted.
  *
  * @param reseed loads the bundled words and creates the empty stats row again.
+ * @param clearLocalState forgets data kept outside the database (for example the weekly activity).
  */
 class LocalDataResetter(
     private val db: WortArtDatabase,
     private val reseed: suspend () -> Unit,
+    private val clearLocalState: () -> Unit = {},
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     suspend fun reset() {
         withContext(ioDispatcher) {
             db.clearAllTables()
+            clearLocalState()
             reseed()
         }
     }

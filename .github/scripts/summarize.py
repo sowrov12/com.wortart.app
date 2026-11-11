@@ -4,6 +4,7 @@
 Usage:
     summarize.py build <log-file> <outcome>
     summarize.py tests <log-file> <outcome>
+    summarize.py lint <log-file> <outcome>
 
 <outcome> is the GitHub step outcome: success, failure, cancelled or skipped.
 Compiler errors are also printed as workflow annotations, so they show up
@@ -193,10 +194,47 @@ def summarize_tests(lines, outcome):
     return out
 
 
+def summarize_lint(lines, outcome):
+    report = "app/build/reports/lint-results-debug.xml"
+    if not os.path.exists(report):
+        if outcome == "success":
+            return ["## ⚠️ Lint produced no report"]
+        return ["## ⚠️ Lint did not finish", ""] + failure_section(lines)
+
+    issues = ET.parse(report).getroot().findall("issue")
+    errors = [i for i in issues if i.get("severity") in ("Error", "Fatal")]
+    warnings = [i for i in issues if i.get("severity") == "Warning"]
+
+    icon = "✅" if not errors else "❌"
+    out = [f"## {icon} Android Lint: {len(errors)} errors, {len(warnings)} warnings", ""]
+
+    def row(issue):
+        where = issue.find("location")
+        place = ""
+        if where is not None:
+            place = f'{clean(where.get("file", ""))}:{where.get("line", "?")}'
+        message = (issue.get("message") or "").replace("|", "\\|").replace("\n", " ")[:160]
+        return f"| `{issue.get('id')}` | {message} | `{place}` |"
+
+    for title, group in (("Errors", errors), ("Warnings", warnings)):
+        if not group:
+            continue
+        out += [f"### {title} (showing {min(len(group), 15)} of {len(group)})", "| Check | Message | Where |", "|---|---|---|"]
+        out += [row(issue) for issue in group[:15]]
+        out.append("")
+    out.append("The full report is the **lint-results-debug.html** file in the build-log artifact.")
+    return out
+
+
 def main():
     mode, log_path, outcome = sys.argv[1:4]
     lines = read_lines(log_path)
-    out = summarize_build(lines, outcome) if mode == "build" else summarize_tests(lines, outcome)
+    if mode == "build":
+        out = summarize_build(lines, outcome)
+    elif mode == "lint":
+        out = summarize_lint(lines, outcome)
+    else:
+        out = summarize_tests(lines, outcome)
     text = "\n".join(out) + "\n"
     print(text)
     if SUMMARY_FILE:

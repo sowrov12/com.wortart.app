@@ -52,8 +52,10 @@ import com.wortart.app.domain.rules.lessons.lessonEmoji
 import com.wortart.app.domain.rules.lessons.parseHexColor
 import com.wortart.app.domain.rules.lessons.toChoiceQuestion
 import com.wortart.app.ui.components.ChoiceQuestionView
+import com.wortart.app.ui.components.EmptyState
 import com.wortart.app.ui.components.LevelBadge
 import com.wortart.app.ui.components.LevelFilterRow
+import com.wortart.app.ui.components.LoadingState
 import com.wortart.app.ui.theme.WortArtColors
 import com.wortart.app.ui.theme.WortArtFonts
 
@@ -71,32 +73,17 @@ fun LessonsContent(
     modifier: Modifier = Modifier,
 ) {
     when (state.status) {
-        LessonsStatus.LOADING -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(text = "Loading lessons…", color = WortArtColors.TextSecondary, fontSize = 15.sp)
-        }
+        LessonsStatus.LOADING -> LoadingState(
+            modifier = modifier.fillMaxSize(),
+            message = "Loading lessons…",
+        )
 
-        LessonsStatus.ERROR -> Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = state.error ?: "Could not load the lessons.",
-                color = WortArtColors.TextSecondary,
-                fontSize = 15.sp,
-            )
-            Button(
-                onClick = onRetry,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = WortArtColors.Gold,
-                    contentColor = WortArtColors.OnGold,
-                ),
-            ) {
-                Text(text = "Try again")
-            }
-        }
+        LessonsStatus.ERROR -> EmptyState(
+            title = state.error ?: "Could not load the lessons.",
+            actionLabel = "Try again",
+            onAction = onRetry,
+            modifier = modifier.fillMaxSize(),
+        )
 
         LessonsStatus.READY -> LessonsList(
             state = state,

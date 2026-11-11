@@ -22,6 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wortart.app.audio.PronunciationAction
 import com.wortart.app.audio.TextToSpeechHelper
 import com.wortart.app.audio.actionFor
+import com.wortart.app.audio.voiceStatus
 import com.wortart.app.data.onboarding.WelcomeStore
 import com.wortart.app.domain.membership.MembershipPolicy
 import com.wortart.app.ui.MainScreen
@@ -47,6 +48,7 @@ import com.wortart.app.ui.welcome.WelcomeScreen
 import com.wortart.app.ui.worddetails.WordDetailsRoute
 import com.wortart.app.ui.worddetails.WordDetailsViewModel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 private const val ROUTE_WELCOME = 0
@@ -81,7 +83,7 @@ class MainActivity : ComponentActivity() {
                 val rulesViewModel: RulesViewModel =
                     viewModel(factory = RulesViewModel.factory(repository, app.lessonsRepository))
                 val statsViewModel: StatsViewModel =
-                    viewModel(factory = StatsViewModel.factory(statsRepository))
+                    viewModel(factory = StatsViewModel.factory(statsRepository, app.activityLog))
                 val practiceViewModel: PracticeViewModel =
                     viewModel(factory = PracticeViewModel.factory(repository, statsRepository))
                 val membersViewModel: MembersViewModel = viewModel(
@@ -105,6 +107,8 @@ class MainActivity : ComponentActivity() {
                 var detailsWordId by rememberSaveable { mutableStateOf<String?>(null) }
 
                 val summary by statsViewModel.uiState.collectAsState()
+                val favoritesCount by remember { repository.observeFavorites().map { it.size } }
+                    .collectAsState(initial = 0)
                 val session by app.membershipRepository.session.collectAsState()
                 val isMember = MembershipPolicy.isActive(session.profile, System.currentTimeMillis())
 
@@ -208,7 +212,14 @@ class MainActivity : ComponentActivity() {
                                 GrammarRulesRoute(viewModel = rulesViewModel, modifier = Modifier.fillMaxSize())
                             },
                             stats = {
-                                StatsRoute(viewModel = statsViewModel, modifier = Modifier.fillMaxSize())
+                                StatsRoute(
+                                    viewModel = statsViewModel,
+                                    onStartPractice = {
+                                        practiceViewModel.startOrResume()
+                                        route = ROUTE_PRACTICE
+                                    },
+                                    modifier = Modifier.fillMaxSize(),
+                                )
                             },
                             profile = {
                                 if (showAdmin) {
@@ -220,7 +231,13 @@ class MainActivity : ComponentActivity() {
                                 } else {
                                     MembersRoute(
                                         viewModel = membersViewModel,
+                                        favoritesCount = favoritesCount,
+                                        voiceStatus = speechState.voiceStatus(),
                                         onOpenAdmin = { showAdmin = true },
+                                        onOpenFavorites = {
+                                            exploreViewModel.showFavorites()
+                                            tabIndex = MainTab.Explore.ordinal
+                                        },
                                         modifier = Modifier.fillMaxSize(),
                                     )
                                 }

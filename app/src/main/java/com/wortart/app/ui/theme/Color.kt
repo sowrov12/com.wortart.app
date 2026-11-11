@@ -23,7 +23,7 @@ object WortArtColors {
     // Text
     val TextPrimary = Color(0xFFF7F5F0)
     val TextSecondary = Color(0xFFA8B0BC)
-    val TextMuted = Color(0xFF7C8796)
+    val TextMuted = Color(0xFF8A94A3)
 
     // Feedback
     val Correct = Color(0xFF20C997)
