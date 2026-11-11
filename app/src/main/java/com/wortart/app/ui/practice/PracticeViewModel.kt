@@ -9,7 +9,12 @@ import com.wortart.app.data.local.entity.VocabEntity
 import com.wortart.app.data.repository.StatsRepository
 import com.wortart.app.data.repository.VocabRepository
 import com.wortart.app.domain.question.ChoiceQuestion
+import com.wortart.app.data.local.entity.groupLabels
+import com.wortart.app.data.local.entity.kindKey
+import com.wortart.app.data.local.entity.WordGroups
 import com.wortart.app.domain.question.ChoiceQuestionBuilder
+import com.wortart.app.domain.question.PracticeSets
+import com.wortart.app.domain.question.QuestionType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,7 +23,22 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
-enum class PracticeStatus { LOADING, EMPTY, ACTIVE, FINISHED }
+enum class PracticeStatus { LOADING, EMPTY, ACTIVE, FINISHED, SETUP }
+
+/**
+ * What the learner chose on the setup screen.
+ *
+ * @param group category filter (a label from WordGroups), or null for all words.
+ * @param type one specific card set, or null.
+ * @param mixed true to give every card a random set that fits it (used when [type] is null).
+ * @param levels CEFR levels to practice; empty means all levels.
+ */
+data class PracticeConfig(
+    val group: String? = null,
+    val type: QuestionType? = null,
+    val mixed: Boolean = false,
+    val levels: Set<String> = emptySet(),
+)
 
 /** A flashcard together with its question. */
 data class SessionCard(val card: VocabEntity, val question: ChoiceQuestion)
@@ -32,6 +52,12 @@ data class PracticeUiState(
     val selected: String? = null,
     val submitted: Boolean = false,
     val correctCount: Int = 0,
+    /** The choices of the setup screen (also kept during the session). */
+    val config: PracticeConfig = PracticeConfig(),
+    /** Groups that exist in the vocabulary, for the setup screen. */
+    val presentGroups: List<String> = emptyList(),
+    /** Number of words that match the setup choices. */
+    val availableCount: Int = 0,
 ) {
     val total: Int get() = cards.size
     val current: SessionCard? get() = cards.getOrNull(index)
@@ -54,7 +80,11 @@ class PracticeViewModel(
     private val stats: StatsRepository,
     private val sessionSize: Int = SESSION_SIZE,
     private val random: Random = Random.Default,
+    initialConfig: PracticeConfig = PracticeConfig(),
 ) : ViewModel() {
+
+    private var config: PracticeConfig = initialConfig
+    private var allWords: List<VocabEntity> = emptyList()
 
     private val state = MutableStateFlow(PracticeUiState())
     val uiState: StateFlow<PracticeUiState> = state.asStateFlow()
@@ -67,20 +97,89 @@ class PracticeViewModel(
 
     fun startNew() {
         viewModelScope.launch {
-            state.value = PracticeUiState(status = PracticeStatus.LOADING)
+            state.value = PracticeUiState(status = PracticeStatus.LOADING, config = config)
             val words = vocabulary.observeWords().first()
-            val cards = words
-                .shuffled(random)
-                .mapNotNull { card ->
-                    ChoiceQuestionBuilder.build(card, words)?.let { SessionCard(card, it) }
-                }
-                .take(sessionSize)
+            val cards = buildSession(words, config)
 
             state.value = PracticeUiState(
                 status = if (cards.isEmpty()) PracticeStatus.EMPTY else PracticeStatus.ACTIVE,
                 cards = cards,
+                config = config,
             )
         }
+    }
+
+    private fun matches(card: VocabEntity, cfg: PracticeConfig): Boolean {
+        val group = cfg.group
+        return (cfg.levels.isEmpty() || card.level in cfg.levels) &&
+            (group == null || group in card.groupLabels())
+    }
+
+    private fun buildSession(words: List<VocabEntity>, cfg: PracticeConfig): List<SessionCard> {
+        val pools = words.groupBy { it.kindKey() }
+        val type = cfg.type
+        return words
+            .filter { matches(it, cfg) }
+            .shuffled(random)
+            .asSequence()
+            .mapNotNull { card ->
+                val pool = pools[card.kindKey()].orEmpty()
+                val question = when {
+                    type != null -> ChoiceQuestionBuilder.buildSet(card, type, pool)
+                    cfg.mixed -> ChoiceQuestionBuilder.buildMixed(card, pool, random)
+                    else -> ChoiceQuestionBuilder.build(card, words)
+                }
+                question?.let { SessionCard(card, it) }
+            }
+            .take(sessionSize)
+            .toList()
+    }
+
+    /** Opens the setup screen where category, card set and levels are chosen. */
+    fun openSetup() {
+        viewModelScope.launch {
+            allWords = vocabulary.observeWords().first()
+            if (config.type == null && !config.mixed) config = config.copy(mixed = true)
+            publishSetup()
+        }
+    }
+
+    private fun publishSetup() {
+        val present = WordGroups.ORDER.filter { group -> allWords.any { group in it.groupLabels() } }
+        state.value = PracticeUiState(
+            status = PracticeStatus.SETUP,
+            config = config,
+            presentGroups = present,
+            availableCount = allWords.count { matches(it, config) },
+        )
+    }
+
+    fun selectGroup(group: String?) {
+        val type = config.type
+        val keepType = type == null || type in PracticeSets.forGroup(group)
+        config = if (keepType) {
+            config.copy(group = group)
+        } else {
+            config.copy(group = group, type = null, mixed = true)
+        }
+        publishSetup()
+    }
+
+    /** Chooses one card set; null chooses "Mixed". */
+    fun selectSet(type: QuestionType?) {
+        config = if (type == null) config.copy(type = null, mixed = true) else config.copy(type = type, mixed = false)
+        publishSetup()
+    }
+
+    fun toggleLevel(level: String) {
+        val levels = if (level in config.levels) config.levels - level else config.levels + level
+        config = config.copy(levels = levels)
+        publishSetup()
+    }
+
+    fun clearLevels() {
+        config = config.copy(levels = emptySet())
+        publishSetup()
     }
 
     /** Marks an option. Ignored once the answer was submitted. */

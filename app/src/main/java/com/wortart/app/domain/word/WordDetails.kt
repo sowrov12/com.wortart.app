@@ -3,6 +3,7 @@ package com.wortart.app.domain.word
 import com.wortart.app.data.local.entity.Auxiliaries
 import com.wortart.app.data.local.entity.VocabEntity
 import com.wortart.app.data.local.entity.WordCategories
+import com.wortart.app.data.local.entity.isSeparable
 
 /** One block of the Word Details page below the word. */
 sealed interface DetailSection {
@@ -36,6 +37,10 @@ fun categoryLabel(card: VocabEntity): String = when (card.category) {
     WordCategories.REGULAR_VERB -> "Regular Verb"
     WordCategories.IRREGULAR_VERB -> "Irregular Verb"
     WordCategories.SEPARABLE_VERB -> "Separable Verb"
+    WordCategories.MODAL_VERB -> "Modal Verb"
+    WordCategories.PREPOSITION -> "Preposition"
+    WordCategories.CONJUNCTION -> "Conjunction"
+    WordCategories.QUESTION_WORD -> "Question Word"
     WordCategories.ADJECTIVE -> "Adjective"
     WordCategories.ADVERB -> if (card.topic == "Connectors") "Connector" else "Adverb"
     else -> card.category
@@ -43,7 +48,7 @@ fun categoryLabel(card: VocabEntity): String = when (card.category) {
 
 fun buildWordDetails(card: VocabEntity): WordDetailsContent {
     val sections = when (card.category) {
-        in WordCategories.VERBS -> verbSections(card)
+        in WordCategories.ALL_VERBS -> verbSections(card)
         WordCategories.ADJECTIVE -> adjectiveSections(card)
         else -> oppositeSection(card)
     }
@@ -90,7 +95,7 @@ private fun verbSections(card: VocabEntity): List<DetailSection> = buildList {
     }
 
     val prefix = card.prefix
-    if (card.category == WordCategories.SEPARABLE_VERB && !prefix.isNullOrBlank()) {
+    if (card.isSeparable() && !prefix.isNullOrBlank()) {
         add(
             DetailSection.Facts(
                 title = "Separable prefix",

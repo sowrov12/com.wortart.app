@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wortart.app.audio.PronunciationAction
+import com.wortart.app.audio.AnswerSounds
 import com.wortart.app.audio.TextToSpeechHelper
 import com.wortart.app.audio.actionFor
 import com.wortart.app.audio.voiceStatus
@@ -77,6 +78,9 @@ class MainActivity : ComponentActivity() {
                 val speech = remember { TextToSpeechHelper(applicationContext) }
                 DisposableEffect(speech) { onDispose { speech.shutdown() } }
                 val speechState by speech.state.collectAsState()
+
+                val answerSounds = remember { AnswerSounds(applicationContext) }
+                DisposableEffect(answerSounds) { onDispose { answerSounds.release() } }
 
                 val exploreViewModel: ExploreViewModel =
                     viewModel(factory = ExploreViewModel.factory(repository))
@@ -153,6 +157,7 @@ class MainActivity : ComponentActivity() {
                                 viewModel = practiceViewModel,
                                 speakingCardId = speechState.speakingId,
                                 onSpeak = speakWord,
+                                onAnswerResult = answerSounds::play,
                                 onClose = {
                                     speech.stop()
                                     route = ROUTE_MAIN
@@ -188,7 +193,7 @@ class MainActivity : ComponentActivity() {
                                     isMember = isMember,
                                     summary = summary,
                                     onOpenFlashcards = {
-                                        practiceViewModel.startOrResume()
+                                        practiceViewModel.openSetup()
                                         route = ROUTE_PRACTICE
                                     },
                                     onOpenExplore = { tabIndex = MainTab.Explore.ordinal },

@@ -52,4 +52,24 @@ data class VocabEntity(
     val antonym: String? = null,
 
     val isFavorite: Boolean = false,
+
+    // Flashcard set data (generated from the word lists)
+    /** Comma-separated group labels, e.g. ",Irregular Verbs,Separable Verbs,". */
+    val tags: String? = null,
+    /** German example with the answer replaced by a gap, for the "fill the blank" set. */
+    val blankDe: String? = null,
+    /** The word that belongs into the gap of [blankDe]. */
+    val blankAnswer: String? = null,
+    /** Two wrong options for the gap, separated by "|". */
+    val blankWrong: String? = null,
+    /** Two wrong Partizip II options, separated by "|". */
+    val pz2Wrong: String? = null,
+    /** German example with the separable prefix replaced by a gap. */
+    val prefixBlankDe: String? = null,
+    /** The word with the separable prefix replaced by a gap, e.g. "_____rufen". */
+    val prefixBlankTitle: String? = null,
+    /** Short meaning of [antonym], e.g. "bad / খারাপ". */
+    val antonymMeaning: String? = null,
+    /** A wrong antonym option, already formatted like "klein — small / ছোট". */
+    val antonymWrong: String? = null,
 )

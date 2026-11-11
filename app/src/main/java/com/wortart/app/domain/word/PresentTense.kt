@@ -21,6 +21,8 @@ object PresentTense {
      */
     fun forms(card: VocabEntity): List<String>? {
         if (card.category !in WordCategories.VERBS) return null
+        // Reflexive and prepositional verbs ("sich waschen", "warten auf") need more than the simple pattern.
+        if (card.word.contains(' ')) return null
         // An irregular verb may change its vowel. Without the er-form the du-form would be a guess.
         if (card.category == WordCategories.IRREGULAR_VERB && card.stammform.isNullOrBlank()) return null
 

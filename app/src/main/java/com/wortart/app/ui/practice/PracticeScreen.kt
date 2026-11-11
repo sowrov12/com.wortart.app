@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +32,7 @@ import com.wortart.app.ui.components.GoldButton
 import com.wortart.app.ui.components.GoldProgressBar
 import com.wortart.app.ui.components.LoadingState
 import com.wortart.app.ui.components.OutlineButton
+import com.wortart.app.domain.question.QuestionType
 import com.wortart.app.ui.components.WortArtTopBar
 import com.wortart.app.ui.theme.WortArtColors
 import com.wortart.app.ui.theme.WortArtFonts
@@ -43,10 +45,16 @@ fun PracticeRoute(
     onSpeak: (wordId: String, word: String) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Called once per submitted answer: true for a correct answer (plays the sound). */
+    onAnswerResult: (Boolean) -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     BackHandler(onBack = onClose)
+
+    LaunchedEffect(state.index, state.submitted) {
+        if (state.status == PracticeStatus.ACTIVE && state.submitted) onAnswerResult(state.isCorrect)
+    }
 
     PracticeScreen(
         state = state,
@@ -59,6 +67,11 @@ fun PracticeRoute(
         onNext = viewModel::next,
         onRestart = viewModel::startNew,
         modifier = modifier,
+        onOpenSetup = viewModel::openSetup,
+        onSelectGroup = viewModel::selectGroup,
+        onSelectSet = viewModel::selectSet,
+        onToggleLevel = viewModel::toggleLevel,
+        onClearLevels = viewModel::clearLevels,
     )
 }
 
@@ -75,6 +88,11 @@ fun PracticeScreen(
     onNext: () -> Unit,
     onRestart: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenSetup: () -> Unit = {},
+    onSelectGroup: (String?) -> Unit = {},
+    onSelectSet: (QuestionType?) -> Unit = {},
+    onToggleLevel: (String) -> Unit = {},
+    onClearLevels: () -> Unit = {},
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         when (state.status) {
@@ -109,6 +127,17 @@ fun PracticeScreen(
                 state = state,
                 onBack = onBack,
                 onRestart = onRestart,
+                onOpenSetup = onOpenSetup,
+            )
+
+            PracticeStatus.SETUP -> PracticeSetupScreen(
+                state = state,
+                onBack = onBack,
+                onSelectGroup = onSelectGroup,
+                onSelectSet = onSelectSet,
+                onToggleLevel = onToggleLevel,
+                onClearLevels = onClearLevels,
+                onStart = onRestart,
             )
         }
     }
@@ -155,6 +184,14 @@ private fun ColumnScope.ActiveSession(
             card = card,
             onSpeak = { onSpeak(card.id, card.word) },
             isSpeaking = card.id == speakingCardId,
+            titleOverride = question.titleBlank,
+            exampleOverride = question.exampleBlank,
+            hideMeaning = question.hideMeaning,
+            revealed = state.submitted,
+            highlight = when (question.type) {
+                QuestionType.BLANK, QuestionType.PREFIX -> question.correctAnswer
+                else -> null
+            },
         )
 
         Text(
@@ -210,7 +247,12 @@ private fun AnswerFeedback(isCorrect: Boolean, correctAnswer: String, explanatio
 }
 
 @Composable
-private fun SessionSummary(state: PracticeUiState, onBack: () -> Unit, onRestart: () -> Unit) {
+private fun SessionSummary(
+    state: PracticeUiState,
+    onBack: () -> Unit,
+    onRestart: () -> Unit,
+    onOpenSetup: () -> Unit,
+) {
     val percent = if (state.total == 0) 0 else Math.round(state.correctCount * 100f / state.total)
 
     WortArtTopBar(title = "Flashcards", onBack = onBack)
@@ -242,6 +284,7 @@ private fun SessionSummary(state: PracticeUiState, onBack: () -> Unit, onRestart
         )
         Spacer(Modifier.height(12.dp))
         GoldButton(text = "Practice again", onClick = onRestart, modifier = Modifier.fillMaxWidth())
+        OutlineButton(text = "Change set", onClick = onOpenSetup, modifier = Modifier.fillMaxWidth())
         OutlineButton(text = "Back to Home", onClick = onBack, modifier = Modifier.fillMaxWidth())
     }
 }

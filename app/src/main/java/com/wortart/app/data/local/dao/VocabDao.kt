@@ -41,6 +41,17 @@ abstract class VocabDao {
         upsertAll(items.map { it.copy(isFavorite = it.id in favoriteIds) })
     }
 
+    @Query("DELETE FROM vocab_table")
+    abstract suspend fun deleteAll()
+
+    /** Replaces the whole dataset (old words that are no longer shipped disappear) and keeps favorites. */
+    @Transaction
+    open suspend fun replaceAllPreservingFavorites(items: List<VocabEntity>) {
+        val favoriteIds = getFavoriteIds().toSet()
+        deleteAll()
+        upsertAll(items.map { it.copy(isFavorite = it.id in favoriteIds) })
+    }
+
     @Query("UPDATE vocab_table SET isFavorite = :isFavorite WHERE id = :id")
     abstract suspend fun setFavorite(id: String, isFavorite: Boolean)
 
@@ -60,7 +71,7 @@ abstract class VocabDao {
         SELECT * FROM vocab_table
         WHERE (:level IS NULL OR level = :level)
           AND (:category IS NULL OR category = :category)
-          AND (:topic IS NULL OR topic = :topic)
+          AND (:topic IS NULL OR topic = :topic OR tags LIKE '%,' || :topic || ',%')
           AND (:favoritesOnly = 0 OR isFavorite = 1)
         ORDER BY word COLLATE NOCASE
         """
@@ -85,7 +96,7 @@ abstract class VocabDao {
                OR translationBn LIKE '%' || :query || '%' ESCAPE '\')
           AND (:level IS NULL OR level = :level)
           AND (:category IS NULL OR category = :category)
-          AND (:topic IS NULL OR topic = :topic)
+          AND (:topic IS NULL OR topic = :topic OR tags LIKE '%,' || :topic || ',%')
           AND (:favoritesOnly = 0 OR isFavorite = 1)
         ORDER BY word COLLATE NOCASE
         """
@@ -100,6 +111,10 @@ abstract class VocabDao {
 
     @Query("SELECT * FROM vocab_table WHERE isFavorite = 1 ORDER BY word COLLATE NOCASE")
     abstract fun observeFavorites(): Flow<List<VocabEntity>>
+
+    /** The distinct tag lists of all words, used to find every group for the Explore grid. */
+    @Query("SELECT DISTINCT tags FROM vocab_table WHERE tags IS NOT NULL")
+    abstract fun observeTagSets(): Flow<List<String>>
 
     /** Distinct topics for the Explore category grid. */
     @Query("SELECT DISTINCT topic FROM vocab_table ORDER BY topic COLLATE NOCASE")

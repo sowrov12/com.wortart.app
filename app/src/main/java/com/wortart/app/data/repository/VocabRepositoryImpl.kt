@@ -6,6 +6,7 @@ import com.wortart.app.data.local.entity.VocabEntity
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
@@ -29,7 +30,10 @@ class VocabRepositoryImpl(
         dao.observeFavorites().distinctUntilChanged().flowOn(ioDispatcher)
 
     override fun observeTopics(): Flow<List<String>> =
-        dao.observeTopics().distinctUntilChanged().flowOn(ioDispatcher)
+        combine(dao.observeTopics(), dao.observeTagSets()) { topics, tagSets ->
+            val tags = tagSets.flatMap { it.split(',') }.map { it.trim() }.filter { it.isNotEmpty() }
+            (topics + tags).distinct()
+        }.distinctUntilChanged().flowOn(ioDispatcher)
 
     override suspend fun getWord(id: String): VocabEntity? =
         withContext(ioDispatcher) { dao.getById(id) }

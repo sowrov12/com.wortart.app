@@ -72,7 +72,8 @@ fun AnswerOptions(
             }
         }
 
-        QuestionType.MEANING, QuestionType.QUIZ -> Column(
+        QuestionType.MEANING, QuestionType.QUIZ, QuestionType.BLANK,
+        QuestionType.PARTIZIP, QuestionType.ANTONYM -> Column(
             modifier = modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {

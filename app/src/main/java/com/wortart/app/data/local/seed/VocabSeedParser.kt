@@ -51,6 +51,15 @@ object VocabSeedParser {
             komparativ = optional("komparativ"),
             superlativ = optional("superlativ"),
             antonym = optional("antonym"),
+            tags = optional("tags"),
+            blankDe = optional("blankDe"),
+            blankAnswer = optional("blankAnswer"),
+            blankWrong = optional("blankWrong"),
+            pz2Wrong = optional("pz2Wrong"),
+            prefixBlankDe = optional("prefixBlankDe"),
+            prefixBlankTitle = optional("prefixBlankTitle"),
+            antonymMeaning = optional("antonymMeaning"),
+            antonymWrong = optional("antonymWrong"),
         )
         validate(entity)
         return entity
@@ -60,7 +69,7 @@ object VocabSeedParser {
         require(e.category in WordCategories.ALL) { "${e.id}: unknown category '${e.category}'" }
         require(e.level in CefrLevels.ALL) { "${e.id}: unknown level '${e.level}'" }
 
-        if (e.category in WordCategories.VERBS) {
+        if (e.category in WordCategories.ALL_VERBS) {
             require(e.auxiliary == Auxiliaries.HABEN || e.auxiliary == Auxiliaries.SEIN) {
                 "${e.id}: verb needs auxiliary haben or sein"
             }
@@ -72,11 +81,6 @@ object VocabSeedParser {
         }
         if (e.category == WordCategories.SEPARABLE_VERB) {
             require(e.prefix != null) { "${e.id}: separable verb needs prefix" }
-        }
-        if (e.category == WordCategories.ADJECTIVE) {
-            require(e.komparativ != null && e.superlativ != null) {
-                "${e.id}: adjective needs komparativ and superlativ"
-            }
         }
     }
 }

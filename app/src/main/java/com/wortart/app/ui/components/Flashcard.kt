@@ -65,6 +65,16 @@ fun FlashcardView(
     onSpeak: () -> Unit,
     modifier: Modifier = Modifier,
     isSpeaking: Boolean = false,
+    /** Shown instead of the German word until [revealed] (e.g. "_____rufen"). */
+    titleOverride: String? = null,
+    /** Shown instead of the German example until [revealed] (the example with a gap). */
+    exampleOverride: String? = null,
+    /** Hides the meaning line until [revealed]. */
+    hideMeaning: Boolean = false,
+    /** False while the question is open: answers and translations stay hidden. */
+    revealed: Boolean = true,
+    /** Word to highlight in the example once revealed; defaults to the card word. */
+    highlight: String? = null,
 ) {
     val shape = RoundedCornerShape(20.dp)
 
@@ -87,7 +97,7 @@ fun FlashcardView(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = card.word,
+                    text = if (revealed) card.word else (titleOverride ?: card.word),
                     color = WortArtColors.TextPrimary,
                     fontSize = 34.sp,
                     fontFamily = WortArtFonts.Serif,
@@ -97,15 +107,22 @@ fun FlashcardView(
                 AudioButton(word = card.word, isSpeaking = isSpeaking, onClick = onSpeak)
             }
 
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = card.shortMeaning(),
-                color = WortArtColors.TextSecondary,
-                fontSize = 16.sp,
-            )
+            if (revealed || !hideMeaning) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = card.shortMeaning(),
+                    color = WortArtColors.TextSecondary,
+                    fontSize = 16.sp,
+                )
+            }
 
             Spacer(Modifier.height(18.dp))
-            ExampleBox(card)
+            ExampleBox(
+                card = card,
+                exampleOverride = exampleOverride,
+                revealed = revealed,
+                highlight = highlight,
+            )
         }
     }
 }
@@ -211,7 +228,12 @@ private fun SpeakerIcon(color: Color) {
 }
 
 @Composable
-internal fun ExampleBox(card: VocabEntity) {
+internal fun ExampleBox(
+    card: VocabEntity,
+    exampleOverride: String? = null,
+    revealed: Boolean = true,
+    highlight: String? = null,
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -221,12 +243,18 @@ internal fun ExampleBox(card: VocabEntity) {
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
-            text = highlightWord(card.exampleDe, card.word),
+            text = if (revealed || exampleOverride == null) {
+                highlightWord(card.exampleDe, highlight ?: card.word)
+            } else {
+                AnnotatedString(exampleOverride)
+            },
             color = WortArtColors.TextPrimary,
             fontSize = 16.sp,
         )
-        Text(text = card.exampleEn, color = WortArtColors.TextSecondary, fontSize = 14.sp)
-        Text(text = card.exampleBn, color = WortArtColors.TextSecondary, fontSize = 14.sp)
+        if (revealed) {
+            Text(text = card.exampleEn, color = WortArtColors.TextSecondary, fontSize = 14.sp)
+            Text(text = card.exampleBn, color = WortArtColors.TextSecondary, fontSize = 14.sp)
+        }
     }
 }
 

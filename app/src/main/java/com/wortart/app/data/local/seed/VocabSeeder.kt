@@ -28,14 +28,14 @@ class VocabSeeder(
         if (upToDate) return@withContext false
 
         val json = context.assets.open(ASSET_NAME).bufferedReader(Charsets.UTF_8).use { it.readText() }
-        vocabDao.upsertPreservingFavorites(VocabSeedParser.parse(json))
+        vocabDao.replaceAllPreservingFavorites(VocabSeedParser.parse(json))
         prefs.edit().putInt(KEY_SEED_VERSION, SEED_VERSION).commit()
         true
     }
 
     companion object {
         /** Increase this whenever vocab_seed.json changes. */
-        const val SEED_VERSION = 2
+        const val SEED_VERSION = 3
         const val ASSET_NAME = "vocab_seed.json"
         const val PREFS_NAME = "wortart_seed"
         private const val KEY_SEED_VERSION = "seed_version"

@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.wortart.app.data.local.entity.VocabEntity
+import com.wortart.app.data.local.entity.WordGroups
+import com.wortart.app.data.local.entity.groupLabels
 import com.wortart.app.data.repository.VocabFilter
 import com.wortart.app.data.repository.VocabRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -138,7 +140,7 @@ class ExploreViewModel(private val repository: VocabRepository) : ViewModel() {
                 ),
             ),
         ) { names, matching ->
-            val counts = matching.groupingBy { it.topic }.eachCount()
+            val counts = matching.flatMap { it.groupLabels() }.groupingBy { it }.eachCount()
             sortTopics(names).map { TopicSummary(it, counts[it] ?: 0) }
         }
 
@@ -177,7 +179,7 @@ class ExploreViewModel(private val repository: VocabRepository) : ViewModel() {
         /** How long typing must pause before the search runs. */
         const val SEARCH_DEBOUNCE_MS = 150L
 
-        private val FEATURED_TOPICS = listOf("Food", "Career", "Health")
+        private val FEATURED_TOPICS = listOf("Food", "Career", "Health") + WordGroups.ORDER
 
         fun factory(repository: VocabRepository): ViewModelProvider.Factory = viewModelFactory {
             initializer { ExploreViewModel(repository) }
