@@ -66,7 +66,7 @@ fun ChoiceQuestionView(
             ) {
                 rowOptions.forEach { option ->
                     OptionButton(
-                        text = option,
+                        text = option.noBn(),
                         state = optionState(option, selected, question.correctAnswer),
                         enabled = !answered,
                         onClick = { onSelect(option) },
@@ -85,7 +85,7 @@ fun ChoiceQuestionView(
                     text = if (isCorrect) {
                         "✓ Correct!"
                     } else {
-                        "✗ Not quite — the answer is ${question.correctAnswer}"
+                        "✗ Not quite — the answer is ${question.correctAnswer.noBn()}"
                     },
                     color = if (isCorrect) WortArtColors.Correct else WortArtColors.Wrong,
                     fontSize = 15.sp,
@@ -94,7 +94,7 @@ fun ChoiceQuestionView(
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = question.explanation,
+                    text = question.explanation.noBn(),
                     color = WortArtColors.TextSecondary,
                     fontSize = 14.sp,
                     textAlign = TextAlign.Center,

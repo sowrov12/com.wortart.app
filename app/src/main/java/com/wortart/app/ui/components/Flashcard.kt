@@ -110,7 +110,7 @@ fun FlashcardView(
             if (revealed || !hideMeaning) {
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = card.shortMeaning(),
+                    text = card.shortMeaning().noBn(),
                     color = WortArtColors.TextSecondary,
                     fontSize = 16.sp,
                 )
@@ -253,7 +253,9 @@ internal fun ExampleBox(
         )
         if (revealed) {
             Text(text = card.exampleEn, color = WortArtColors.TextSecondary, fontSize = 14.sp)
-            Text(text = card.exampleBn, color = WortArtColors.TextSecondary, fontSize = 14.sp)
+            if (LocalShowBengali.current) {
+                Text(text = card.exampleBn, color = WortArtColors.TextSecondary, fontSize = 14.sp)
+            }
         }
     }
 }

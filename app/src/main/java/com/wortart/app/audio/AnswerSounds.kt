@@ -18,8 +18,8 @@ class AnswerSounds(context: Context) {
         )
         .build()
 
-    private val correctId: Int = pool.load(context, R.raw.sound_correct, 1)
-    private val wrongId: Int = pool.load(context, R.raw.sound_wrong, 1)
+    private val correctId: Int = pool.load(context, R.raw.correct_answer, 1)
+    private val wrongId: Int = pool.load(context, R.raw.wrong_answer, 1)
 
     fun play(correct: Boolean) {
         pool.play(if (correct) correctId else wrongId, 1f, 1f, 1, 0, 1f)

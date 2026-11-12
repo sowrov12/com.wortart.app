@@ -1,5 +1,7 @@
 package com.wortart.app.ui.worddetails
 
+import com.wortart.app.ui.components.LocalShowBengali
+import com.wortart.app.ui.components.noBn
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -151,7 +153,7 @@ private fun WordBody(
                 )
             }
             Text(
-                text = card.shortMeaning(),
+                text = card.shortMeaning().noBn(),
                 color = WortArtColors.TextSecondary,
                 fontSize = 17.sp,
             )

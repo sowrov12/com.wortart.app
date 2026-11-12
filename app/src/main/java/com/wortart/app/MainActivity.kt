@@ -21,6 +21,18 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wortart.app.audio.PronunciationAction
 import com.wortart.app.audio.AnswerSounds
+import com.wortart.app.data.settings.AppSettings
+import com.wortart.app.reminder.ReminderScheduler
+import com.wortart.app.ui.components.LocalShowBengali
+import com.wortart.app.ui.practice.CategoryPickerScreen
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.core.content.ContextCompat
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import com.wortart.app.audio.TextToSpeechHelper
 import com.wortart.app.audio.actionFor
 import com.wortart.app.audio.voiceStatus
@@ -56,6 +68,7 @@ private const val ROUTE_WELCOME = 0
 private const val ROUTE_MAIN = 1
 private const val ROUTE_PRACTICE = 2
 private const val ROUTE_DETAILS = 3
+private const val ROUTE_CATEGORY = 4
 
 /**
  * Hosts the app: the welcome screen on the first start, then the tabs (Home, Explore, Rules,
@@ -70,10 +83,35 @@ class MainActivity : ComponentActivity() {
         val repository = app.vocabRepository
         val statsRepository = app.statsRepository
         val welcomeStore = WelcomeStore(this)
+        val settings = AppSettings(this)
 
         setContent {
+            val showBengali by settings.showBengali.collectAsState()
+            val readFlashcards by settings.readFlashcards.collectAsState()
+            val remindersOn by settings.remindersOn.collectAsState()
+
             WortArtTheme {
+              CompositionLocalProvider(LocalShowBengali provides showBengali) {
                 val scope = rememberCoroutineScope()
+
+                val notificationPermission = rememberLauncherForActivityResult(
+                    ActivityResultContracts.RequestPermission(),
+                ) { }
+                LaunchedEffect(remindersOn) {
+                    if (remindersOn) {
+                        ReminderScheduler.schedule(applicationContext)
+                        if (Build.VERSION.SDK_INT >= 33 &&
+                            ContextCompat.checkSelfPermission(
+                                applicationContext,
+                                Manifest.permission.POST_NOTIFICATIONS,
+                            ) != PackageManager.PERMISSION_GRANTED
+                        ) {
+                            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    } else {
+                        ReminderScheduler.cancel(applicationContext)
+                    }
+                }
 
                 val speech = remember { TextToSpeechHelper(applicationContext) }
                 DisposableEffect(speech) { onDispose { speech.shutdown() } }
@@ -158,10 +196,33 @@ class MainActivity : ComponentActivity() {
                                 speakingCardId = speechState.speakingId,
                                 onSpeak = speakWord,
                                 onAnswerResult = answerSounds::play,
+                                readAloud = readFlashcards,
+                                reminders = remindersOn,
+                                showBengali = showBengali,
+                                onReadAloud = settings::setReadFlashcards,
+                                onReminders = settings::setRemindersOn,
+                                onShowBengali = settings::setShowBengali,
+                                onOpenCategories = { route = ROUTE_CATEGORY },
                                 onClose = {
                                     speech.stop()
                                     route = ROUTE_MAIN
                                 },
+                                modifier = Modifier.safeDrawingPadding(),
+                            )
+                        }
+
+                        ROUTE_CATEGORY -> {
+                            val counts by practiceViewModel.groupCounts.collectAsState()
+                            val practiceState by practiceViewModel.uiState.collectAsState()
+                            CategoryPickerScreen(
+                                counts = counts,
+                                selected = practiceState.config.group,
+                                onLoad = practiceViewModel::loadGroupCounts,
+                                onSelect = { group ->
+                                    practiceViewModel.chooseGroup(group)
+                                    route = ROUTE_PRACTICE
+                                },
+                                onBack = { route = ROUTE_PRACTICE },
                                 modifier = Modifier.safeDrawingPadding(),
                             )
                         }
@@ -193,7 +254,7 @@ class MainActivity : ComponentActivity() {
                                     isMember = isMember,
                                     summary = summary,
                                     onOpenFlashcards = {
-                                        practiceViewModel.openSetup()
+                                        practiceViewModel.startOrResume()
                                         route = ROUTE_PRACTICE
                                     },
                                     onOpenExplore = { tabIndex = MainTab.Explore.ordinal },
@@ -250,6 +311,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
+              }
             }
         }
     }

@@ -1,5 +1,7 @@
 package com.wortart.app.ui.rules
 
+import com.wortart.app.ui.components.LocalShowBengali
+import com.wortart.app.ui.components.noBn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -204,7 +206,7 @@ private fun LessonCard(
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    text = "${lesson.title.en} · ${lesson.title.bn}",
+                    text = "${lesson.title.en} · ${lesson.title.bn}".noBn(),
                     color = WortArtColors.TextSecondary,
                     fontSize = 13.sp,
                 )
@@ -226,7 +228,7 @@ private fun LessonCard(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(text = lesson.summary.en, color = WortArtColors.TextSecondary, fontSize = 15.sp)
-                    Text(text = lesson.summary.bn, color = WortArtColors.GoldLight, fontSize = 15.sp)
+                    if (LocalShowBengali.current) Text(text = lesson.summary.bn, color = WortArtColors.GoldLight, fontSize = 15.sp)
                 }
 
                 lesson.blocks.forEach { block -> LessonBlockView(block) }
@@ -268,12 +270,12 @@ private fun LessonBlockView(block: LessonBlock) {
                 )
             }
             Text(text = block.en, color = WortArtColors.TextSecondary, fontSize = 15.sp, lineHeight = 22.sp)
-            Text(text = block.bn, color = WortArtColors.GoldLight, fontSize = 15.sp, lineHeight = 22.sp)
+            if (LocalShowBengali.current) Text(text = block.bn, color = WortArtColors.GoldLight, fontSize = 15.sp, lineHeight = 22.sp)
         }
 
         is LessonBlock.Table -> RuleTableView(
             RuleBlock.Table(
-                title = block.caption?.let { "${it.en} · ${it.bn}" },
+                title = block.caption?.let { "${it.en} · ${it.bn}".noBn() },
                 headers = block.headers,
                 rows = block.rows,
             ),
@@ -288,7 +290,7 @@ private fun LessonBlockView(block: LessonBlock) {
 
         is LessonBlock.Tip -> Callout(label = "Tip", accent = WortArtColors.Gold) {
             Text(text = block.en, color = WortArtColors.TextPrimary, fontSize = 14.sp)
-            Text(text = block.bn, color = WortArtColors.GoldLight, fontSize = 14.sp)
+            if (LocalShowBengali.current) Text(text = block.bn, color = WortArtColors.GoldLight, fontSize = 14.sp)
         }
 
         is LessonBlock.Mistake -> Callout(label = "Common mistake", accent = WortArtColors.Wrong) {
@@ -300,7 +302,7 @@ private fun LessonBlockView(block: LessonBlock) {
             )
             Text(text = "✓  ${block.right}", color = WortArtColors.Correct, fontSize = 15.sp)
             Text(text = block.en, color = WortArtColors.TextSecondary, fontSize = 14.sp)
-            Text(text = block.bn, color = WortArtColors.GoldLight, fontSize = 14.sp)
+            if (LocalShowBengali.current) Text(text = block.bn, color = WortArtColors.GoldLight, fontSize = 14.sp)
         }
     }
 }

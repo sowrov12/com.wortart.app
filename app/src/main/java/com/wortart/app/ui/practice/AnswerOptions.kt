@@ -1,5 +1,7 @@
 package com.wortart.app.ui.practice
 
+import com.wortart.app.ui.components.LocalShowBengali
+import com.wortart.app.ui.components.noBn
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -62,7 +64,7 @@ fun AnswerOptions(
         ) {
             question.options.forEach { option ->
                 ChipOption(
-                    text = option,
+                    text = option.noBn(),
                     look = lookOf(option),
                     enabled = !submitted,
                     onClick = { onSelect(option) },
@@ -79,7 +81,7 @@ fun AnswerOptions(
         ) {
             question.options.forEach { option ->
                 RadioOption(
-                    text = option,
+                    text = option.noBn(),
                     look = lookOf(option),
                     enabled = !submitted,
                     onClick = { onSelect(option) },

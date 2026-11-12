@@ -1,6 +1,8 @@
 package com.wortart.app.ui.practice
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,20 +13,28 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.wortart.app.domain.question.QuestionType
 import com.wortart.app.ui.components.EmptyState
 import com.wortart.app.ui.components.FavoriteButton
 import com.wortart.app.ui.components.FlashcardView
@@ -32,8 +42,8 @@ import com.wortart.app.ui.components.GoldButton
 import com.wortart.app.ui.components.GoldProgressBar
 import com.wortart.app.ui.components.LoadingState
 import com.wortart.app.ui.components.OutlineButton
-import com.wortart.app.domain.question.QuestionType
 import com.wortart.app.ui.components.WortArtTopBar
+import com.wortart.app.ui.components.noBn
 import com.wortart.app.ui.theme.WortArtColors
 import com.wortart.app.ui.theme.WortArtFonts
 
@@ -47,6 +57,13 @@ fun PracticeRoute(
     modifier: Modifier = Modifier,
     /** Called once per submitted answer: true for a correct answer (plays the sound). */
     onAnswerResult: (Boolean) -> Unit = {},
+    readAloud: Boolean = true,
+    reminders: Boolean = true,
+    showBengali: Boolean = true,
+    onReadAloud: (Boolean) -> Unit = {},
+    onReminders: (Boolean) -> Unit = {},
+    onShowBengali: (Boolean) -> Unit = {},
+    onOpenCategories: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -54,6 +71,15 @@ fun PracticeRoute(
 
     LaunchedEffect(state.index, state.submitted) {
         if (state.status == PracticeStatus.ACTIVE && state.submitted) onAnswerResult(state.isCorrect)
+    }
+
+    // Read each card aloud when it appears. A card whose word is hidden is read after the answer.
+    val currentCard = state.current
+    LaunchedEffect(currentCard?.card?.id, state.submitted, readAloud) {
+        val session = currentCard ?: return@LaunchedEffect
+        if (!readAloud || state.status != PracticeStatus.ACTIVE) return@LaunchedEffect
+        val wordHidden = session.question.titleBlank != null
+        if (wordHidden == state.submitted) onSpeak(session.card.id, session.card.word)
     }
 
     PracticeScreen(
@@ -67,11 +93,20 @@ fun PracticeRoute(
         onNext = viewModel::next,
         onRestart = viewModel::startNew,
         modifier = modifier,
-        onOpenSetup = viewModel::openSetup,
-        onSelectGroup = viewModel::selectGroup,
-        onSelectSet = viewModel::selectSet,
-        onToggleLevel = viewModel::toggleLevel,
-        onClearLevels = viewModel::clearLevels,
+        onOpenSetup = viewModel::startNew,
+        menu = PracticeMenuConfig(
+            levels = state.config.levels,
+            readAloud = readAloud,
+            reminders = reminders,
+            showBengali = showBengali,
+            onToggleLevel = viewModel::toggleLevelLive,
+            onClearLevels = viewModel::clearLevelsLive,
+            onReadAloud = onReadAloud,
+            onReminders = onReminders,
+            onShowBengali = onShowBengali,
+            onSkip = viewModel::skip,
+            onOpenCategories = onOpenCategories,
+        ),
     )
 }
 
@@ -89,23 +124,21 @@ fun PracticeScreen(
     onRestart: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenSetup: () -> Unit = {},
-    onSelectGroup: (String?) -> Unit = {},
-    onSelectSet: (QuestionType?) -> Unit = {},
-    onToggleLevel: (String) -> Unit = {},
-    onClearLevels: () -> Unit = {},
+    menu: PracticeMenuConfig = PracticeMenuConfig(),
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         when (state.status) {
-            PracticeStatus.LOADING -> {
-                WortArtTopBar(title = "Flashcards", onBack = onBack)
+            PracticeStatus.LOADING, PracticeStatus.SETUP -> {
+                WortArtTopBar(title = "Flashcards", onBack = onBack, trailing = { PracticeMenu(menu) })
                 LoadingState(modifier = Modifier.weight(1f))
             }
 
             PracticeStatus.EMPTY -> {
-                WortArtTopBar(title = "Flashcards", onBack = onBack)
+                WortArtTopBar(title = "Flashcards", onBack = onBack, trailing = { PracticeMenu(menu) })
+                CategoryRow(state = state, onOpenCategories = menu.onOpenCategories)
                 EmptyState(
-                    title = "No flashcards yet",
-                    message = "The vocabulary is still loading. Try again in a moment.",
+                    title = "No flashcards here",
+                    message = "No word matches this category and level. Change the category or the level.",
                     actionLabel = "Try again",
                     onAction = onRestart,
                     modifier = Modifier.weight(1f),
@@ -121,6 +154,7 @@ fun PracticeScreen(
                 onSelect = onSelect,
                 onSubmit = onSubmit,
                 onNext = onNext,
+                menu = menu,
             )
 
             PracticeStatus.FINISHED -> SessionSummary(
@@ -129,17 +163,49 @@ fun PracticeScreen(
                 onRestart = onRestart,
                 onOpenSetup = onOpenSetup,
             )
+        }
+    }
+}
 
-            PracticeStatus.SETUP -> PracticeSetupScreen(
-                state = state,
-                onBack = onBack,
-                onSelectGroup = onSelectGroup,
-                onSelectSet = onSelectSet,
-                onToggleLevel = onToggleLevel,
-                onClearLevels = onClearLevels,
-                onStart = onRestart,
+@Composable
+private fun CategoryRow(
+    state: PracticeUiState,
+    onOpenCategories: () -> Unit,
+    trailing: @Composable () -> Unit = {},
+) {
+    val shape = RoundedCornerShape(24.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .clip(shape)
+                .border(1.dp, WortArtColors.Gold.copy(alpha = 0.6f), shape)
+                .clickable(role = Role.Button, onClick = onOpenCategories)
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(text = "🗂", fontSize = 16.sp)
+            Text(
+                text = state.config.group ?: "All Category",
+                color = WortArtColors.TextPrimary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+            )
+            Icon(
+                imageVector = Icons.Filled.KeyboardArrowDown,
+                contentDescription = "Choose category",
+                tint = WortArtColors.TextPrimary,
+                modifier = Modifier.size(20.dp),
             )
         }
+        trailing()
     }
 }
 
@@ -153,14 +219,16 @@ private fun ColumnScope.ActiveSession(
     onSelect: (String) -> Unit,
     onSubmit: () -> Unit,
     onNext: () -> Unit,
+    menu: PracticeMenuConfig,
 ) {
     val session = state.current ?: return
     val card = session.card
     val question = session.question
 
-    WortArtTopBar(
-        title = "Flashcards",
-        onBack = onBack,
+    WortArtTopBar(title = "Flashcards", onBack = onBack, trailing = { PracticeMenu(menu) })
+    CategoryRow(
+        state = state,
+        onOpenCategories = menu.onOpenCategories,
         trailing = { FavoriteButton(isFavorite = card.isFavorite, onClick = onToggleFavorite) },
     )
 
@@ -171,14 +239,16 @@ private fun ColumnScope.ActiveSession(
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = "${state.index + 1} / ${state.total}",
-                color = WortArtColors.TextSecondary,
-                fontSize = 14.sp,
-            )
+        if (!state.endless) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "${state.index + 1} / ${state.total}",
+                    color = WortArtColors.TextSecondary,
+                    fontSize = 14.sp,
+                )
+            }
+            GoldProgressBar(fraction = state.progress)
         }
-        GoldProgressBar(fraction = state.progress)
 
         FlashcardView(
             card = card,
@@ -222,7 +292,7 @@ private fun ColumnScope.ActiveSession(
     GoldButton(
         text = when {
             !state.submitted -> "Submit"
-            state.isLastCard -> "Finish"
+            state.isLastCard && !state.endless -> "Finish"
             else -> "Next"
         },
         enabled = state.submitted || state.selected != null,
@@ -237,12 +307,12 @@ private fun ColumnScope.ActiveSession(
 private fun AnswerFeedback(isCorrect: Boolean, correctAnswer: String, explanation: String) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-            text = if (isCorrect) "✓ Correct!" else "✗ Not quite — the answer is $correctAnswer",
+            text = if (isCorrect) "✓ Correct!" else "✗ Not quite — the answer is ${correctAnswer.noBn()}",
             color = if (isCorrect) WortArtColors.Correct else WortArtColors.Wrong,
             fontSize = 15.sp,
             fontWeight = FontWeight.SemiBold,
         )
-        Text(text = explanation, color = WortArtColors.TextSecondary, fontSize = 14.sp)
+        Text(text = explanation.noBn(), color = WortArtColors.TextSecondary, fontSize = 14.sp)
     }
 }
 

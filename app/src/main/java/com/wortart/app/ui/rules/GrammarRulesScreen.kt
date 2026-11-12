@@ -1,5 +1,7 @@
 package com.wortart.app.ui.rules
 
+import com.wortart.app.ui.components.LocalShowBengali
+import com.wortart.app.ui.components.noBn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -299,7 +301,7 @@ internal fun ExampleListView(block: RuleBlock.ExampleList) {
                     fontSize = 16.sp,
                 )
                 Text(text = example.en, color = WortArtColors.TextSecondary, fontSize = 14.sp)
-                Text(text = example.bn, color = WortArtColors.GoldLight, fontSize = 14.sp)
+                if (LocalShowBengali.current) Text(text = example.bn, color = WortArtColors.GoldLight, fontSize = 14.sp)
             }
         }
     }

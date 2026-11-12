@@ -40,6 +40,9 @@ data class PracticeConfig(
     val levels: Set<String> = emptySet(),
 )
 
+/** Number of words per category, for the category page. */
+data class GroupCounts(val total: Int = 0, val groups: List<Pair<String, Int>> = emptyList())
+
 /** A flashcard together with its question. */
 data class SessionCard(val card: VocabEntity, val question: ChoiceQuestion)
 
@@ -58,6 +61,8 @@ data class PracticeUiState(
     val presentGroups: List<String> = emptyList(),
     /** Number of words that match the setup choices. */
     val availableCount: Int = 0,
+    /** True when cards never run out (no counter, no summary). */
+    val endless: Boolean = false,
 ) {
     val total: Int get() = cards.size
     val current: SessionCard? get() = cards.getOrNull(index)
@@ -81,6 +86,8 @@ class PracticeViewModel(
     private val sessionSize: Int = SESSION_SIZE,
     private val random: Random = Random.Default,
     initialConfig: PracticeConfig = PracticeConfig(),
+    /** True: cards keep coming at random, there is no fixed session length. */
+    private val endless: Boolean = false,
 ) : ViewModel() {
 
     private var config: PracticeConfig = initialConfig
@@ -97,7 +104,7 @@ class PracticeViewModel(
 
     fun startNew() {
         viewModelScope.launch {
-            state.value = PracticeUiState(status = PracticeStatus.LOADING, config = config)
+            state.value = PracticeUiState(status = PracticeStatus.LOADING, config = config, endless = endless)
             val words = vocabulary.observeWords().first()
             val cards = buildSession(words, config)
 
@@ -105,6 +112,7 @@ class PracticeViewModel(
                 status = if (cards.isEmpty()) PracticeStatus.EMPTY else PracticeStatus.ACTIVE,
                 cards = cards,
                 config = config,
+                endless = endless,
             )
         }
     }
@@ -208,14 +216,68 @@ class PracticeViewModel(
         viewModelScope.launch { stats.recordAnswer(correct) }
     }
 
-    /** Moves to the next card, or finishes the session after the last one. */
-    fun next() {
-        state.update { current ->
-            when {
-                current.status != PracticeStatus.ACTIVE || !current.submitted -> current
-                current.isLastCard -> current.copy(status = PracticeStatus.FINISHED)
-                else -> current.copy(index = current.index + 1, selected = null, submitted = false)
+    /** Moves to the next card, or finishes the session after the last one (never in endless mode). */
+    fun next() = advance(requireSubmitted = true)
+
+    /** Skips the current card without answering it. */
+    fun skip() = advance(requireSubmitted = false)
+
+    private fun advance(requireSubmitted: Boolean) {
+        val current = state.value
+        if (current.status != PracticeStatus.ACTIVE) return
+        if (requireSubmitted && !current.submitted) return
+
+        if (!current.isLastCard) {
+            state.value = current.copy(index = current.index + 1, selected = null, submitted = false)
+            return
+        }
+        if (!endless) {
+            if (requireSubmitted) state.value = current.copy(status = PracticeStatus.FINISHED)
+            return
+        }
+        // Endless: a fresh batch of random cards.
+        viewModelScope.launch {
+            val cards = buildSession(vocabulary.observeWords().first(), config)
+            if (cards.isNotEmpty()) {
+                state.value = state.value.copy(cards = cards, index = 0, selected = null, submitted = false)
             }
+        }
+    }
+
+    // ---- choices made while practicing (the session restarts with the new choice)
+
+    fun toggleLevelLive(level: String) {
+        val levels = if (level in config.levels) config.levels - level else config.levels + level
+        config = config.copy(levels = levels)
+        startNew()
+    }
+
+    fun clearLevelsLive() {
+        config = config.copy(levels = emptySet())
+        startNew()
+    }
+
+    fun chooseGroup(group: String?) {
+        config = config.copy(group = group)
+        startNew()
+    }
+
+    private val groupCountsState = MutableStateFlow(GroupCounts())
+
+    /** How many words each category has (for the category page). */
+    val groupCounts: StateFlow<GroupCounts> = groupCountsState.asStateFlow()
+
+    fun loadGroupCounts() {
+        viewModelScope.launch {
+            val levels = config.levels
+            val words = vocabulary.observeWords().first()
+                .filter { levels.isEmpty() || it.level in levels }
+            groupCountsState.value = GroupCounts(
+                total = words.size,
+                groups = WordGroups.ORDER
+                    .map { group -> group to words.count { group in it.groupLabels() } }
+                    .filter { it.second > 0 },
+            )
         }
     }
 
@@ -233,8 +295,19 @@ class PracticeViewModel(
 
     companion object {
         const val SESSION_SIZE = 20
+        const val ENDLESS_BATCH = 30
 
         fun factory(vocabulary: VocabRepository, stats: StatsRepository): ViewModelProvider.Factory =
-            viewModelFactory { initializer { PracticeViewModel(vocabulary, stats) } }
+            viewModelFactory {
+                initializer {
+                    PracticeViewModel(
+                        vocabulary,
+                        stats,
+                        sessionSize = ENDLESS_BATCH,
+                        initialConfig = PracticeConfig(mixed = true),
+                        endless = true,
+                    )
+                }
+            }
     }
 }

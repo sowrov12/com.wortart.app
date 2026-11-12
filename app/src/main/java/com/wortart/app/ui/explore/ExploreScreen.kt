@@ -1,5 +1,7 @@
 package com.wortart.app.ui.explore
 
+import com.wortart.app.ui.components.LocalShowBengali
+import com.wortart.app.ui.components.noBn
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -344,7 +346,7 @@ private fun WordRow(card: VocabEntity, onClick: () -> Unit, onToggleFavorite: ()
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                text = card.shortMeaning().replace(" / ", " | "),
+                text = card.shortMeaning().noBn().replace(" / ", " | "),
                 color = WortArtColors.TextSecondary,
                 fontSize = 13.sp,
             )
