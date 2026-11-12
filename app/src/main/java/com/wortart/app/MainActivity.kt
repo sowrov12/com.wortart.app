@@ -21,7 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wortart.app.audio.PronunciationAction
 import com.wortart.app.audio.AnswerSounds
+import com.wortart.app.data.icons.IconStore
 import com.wortart.app.data.settings.AppSettings
+import com.wortart.app.ui.components.LocalAppIcons
 import com.wortart.app.reminder.ReminderScheduler
 import com.wortart.app.ui.components.LocalShowBengali
 import com.wortart.app.ui.practice.CategoryPickerScreen
@@ -87,12 +89,18 @@ class MainActivity : ComponentActivity() {
         val settings = AppSettings(this)
 
         setContent {
+            val iconStore = remember { IconStore(applicationContext) }
+            val appIcons by iconStore.icons.collectAsState()
+            LaunchedEffect(Unit) { iconStore.sync() }
             val showBengali by settings.showBengali.collectAsState()
             val readFlashcards by settings.readFlashcards.collectAsState()
             val remindersOn by settings.remindersOn.collectAsState()
 
             WortArtTheme {
-              CompositionLocalProvider(LocalShowBengali provides showBengali) {
+              CompositionLocalProvider(
+                  LocalShowBengali provides showBengali,
+                  LocalAppIcons provides appIcons,
+              ) {
                 val scope = rememberCoroutineScope()
 
                 val notificationPermission = rememberLauncherForActivityResult(

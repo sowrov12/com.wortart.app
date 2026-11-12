@@ -1,5 +1,6 @@
 package com.wortart.app.ui.stats
 
+import com.wortart.app.ui.components.AppIcon
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -246,7 +247,7 @@ private fun StatTile(
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = emoji, fontSize = 24.sp)
+        AppIcon(name = if (emoji == "⭐") "German Score" else "", emoji = emoji, size = 28.dp)
         Spacer(Modifier.size(10.dp))
         Column {
             Text(text = label, color = WortArtColors.TextSecondary, fontSize = 12.sp)
@@ -280,7 +281,7 @@ private fun StreakCard(days: Int, practicedToday: Boolean, week: List<DayActivit
                     .background(WortArtColors.Gold.copy(alpha = 0.14f), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = "🔥", fontSize = 24.sp)
+                AppIcon(name = "Daily Streak", emoji = "🔥", size = 28.dp)
             }
             Spacer(Modifier.size(14.dp))
             Column {

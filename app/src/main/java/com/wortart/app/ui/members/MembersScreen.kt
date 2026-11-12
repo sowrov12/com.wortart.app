@@ -1,5 +1,6 @@
 package com.wortart.app.ui.members
 
+import com.wortart.app.ui.components.AppIcon
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -312,7 +313,7 @@ private fun Header(isMember: Boolean, canDeleteAccount: Boolean, onDeleteAccount
                 )
                 if (isMember) {
                     Spacer(Modifier.size(8.dp))
-                    Text(text = "👑", fontSize = 22.sp)
+                    AppIcon(name = "Crown", emoji = "👑", size = 26.dp)
                 }
             }
             Text(

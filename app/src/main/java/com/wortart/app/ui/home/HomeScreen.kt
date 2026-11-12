@@ -1,5 +1,6 @@
 package com.wortart.app.ui.home
 
+import com.wortart.app.ui.components.AppIcon
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -73,7 +74,7 @@ fun HomeScreen(
                 modifier = Modifier.weight(1f),
             )
             if (isMember) {
-                Text(text = "👑", fontSize = 20.sp)
+                AppIcon(name = "Crown", emoji = "👑", size = 24.dp)
             }
             IconButton(onClick = onOpenProfile) {
                 Icon(
@@ -105,14 +106,16 @@ fun HomeScreen(
                 value = "${summary.germanScore}",
                 modifier = Modifier.weight(1f),
                 leading = {
-                    Icon(Icons.Filled.Star, contentDescription = null, tint = WortArtColors.Gold, modifier = Modifier.size(30.dp))
+                    AppIcon(name = "German Score", size = 30.dp) {
+                        Icon(Icons.Filled.Star, contentDescription = null, tint = WortArtColors.Gold, modifier = Modifier.size(30.dp))
+                    }
                 },
             )
             StatTile(
                 label = "Daily Streak",
                 value = streakLabel(summary.streakDays),
                 modifier = Modifier.weight(1f),
-                leading = { Text(text = "🔥", fontSize = 26.sp) },
+                leading = { AppIcon(name = "Daily Streak", emoji = "🔥", size = 30.dp) },
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {

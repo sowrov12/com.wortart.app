@@ -19,17 +19,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.saveable.SaveableStateHolder
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.unit.dp
+import com.wortart.app.ui.components.AppIcon
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.wortart.app.ui.theme.WortArtColors
 
 /** Bottom navigation tabs. Flashcard practice opens from Home as a full-screen session. */
-enum class MainTab(val label: String, val icon: ImageVector) {
-    Home("Home", Icons.Filled.Home),
-    Explore("Explore", Icons.Filled.Search),
-    Rules("Rules", Icons.Filled.Info),
-    Stats("Stats", Icons.Filled.Star),
-    Profile("Profile", Icons.Filled.Person),
+enum class MainTab(val label: String, val icon: ImageVector, val iconName: String) {
+    Home("Home", Icons.Filled.Home, "Flashcards"),
+    Explore("Explore", Icons.Filled.Search, "Explore"),
+    Rules("Rules", Icons.Filled.Info, "Grammar Rules"),
+    Stats("Stats", Icons.Filled.Star, "Statistics"),
+    Profile("Profile", Icons.Filled.Person, "Member"),
 }
 
 /**
@@ -57,7 +60,13 @@ fun MainScreen(
                     NavigationBarItem(
                         selected = tab == selectedTab,
                         onClick = { onSelectTab(tab) },
-                        icon = { Icon(imageVector = tab.icon, contentDescription = null) },
+                        icon = {
+                            AppIcon(
+                                name = tab.iconName,
+                                modifier = Modifier.alpha(if (tab == selectedTab) 1f else 0.6f),
+                                size = 26.dp,
+                            ) { Icon(imageVector = tab.icon, contentDescription = null) }
+                        },
                         label = { Text(tab.label) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = WortArtColors.Gold,

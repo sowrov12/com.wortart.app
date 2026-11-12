@@ -1,5 +1,6 @@
 package com.wortart.app.ui.explore
 
+import com.wortart.app.ui.components.AppIcon
 import com.wortart.app.ui.components.LocalShowBengali
 import com.wortart.app.ui.components.noBn
 import androidx.activity.compose.BackHandler
@@ -212,7 +213,11 @@ private fun SearchRow(
             singleLine = true,
             shape = RoundedCornerShape(16.dp),
             placeholder = { Text(text = "Search words…", color = WortArtColors.TextMuted) },
-            leadingIcon = { Icon(imageVector = Icons.Filled.Search, contentDescription = null) },
+            leadingIcon = {
+                AppIcon(name = "Search", size = 22.dp) {
+                    Icon(imageVector = Icons.Filled.Search, contentDescription = null)
+                }
+            },
             trailingIcon = {
                 if (query.isNotEmpty()) {
                     IconButton(onClick = { onQueryChange("") }) {
@@ -283,7 +288,7 @@ private fun CategoryCard(topic: TopicSummary, selected: Boolean, onClick: () -> 
                 .background(WortArtColors.Gold.copy(alpha = 0.14f), CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = topicEmoji(topic.name), fontSize = 20.sp)
+            AppIcon(name = topic.name, emoji = topicEmoji(topic.name), size = 24.dp)
         }
         Text(
             text = topic.name,
@@ -335,7 +340,7 @@ private fun WordRow(card: VocabEntity, onClick: () -> Unit, onToggleFavorite: ()
                 .background(WortArtColors.Gold.copy(alpha = 0.14f), CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = topicEmoji(card.topic), fontSize = 22.sp)
+            AppIcon(name = card.topic, emoji = topicEmoji(card.topic), size = 26.dp)
         }
         Spacer(Modifier.size(12.dp))
         Column(modifier = Modifier.weight(1f)) {

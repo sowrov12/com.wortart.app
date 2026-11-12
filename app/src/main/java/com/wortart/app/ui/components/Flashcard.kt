@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -75,6 +76,8 @@ fun FlashcardView(
     revealed: Boolean = true,
     /** Word to highlight in the example once revealed; defaults to the card word. */
     highlight: String? = null,
+    /** False while the German word is hidden: reading it aloud would give the answer away. */
+    speakEnabled: Boolean = true,
 ) {
     val shape = RoundedCornerShape(20.dp)
 
@@ -104,7 +107,7 @@ fun FlashcardView(
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.weight(1f),
                 )
-                AudioButton(word = card.word, isSpeaking = isSpeaking, onClick = onSpeak)
+                AudioButton(word = card.word, isSpeaking = isSpeaking, enabled = speakEnabled, onClick = onSpeak)
             }
 
             if (revealed || !hideMeaning) {
@@ -166,7 +169,12 @@ internal fun FavoriteButton(isFavorite: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-internal fun AudioButton(word: String, isSpeaking: Boolean, onClick: () -> Unit) {
+internal fun AudioButton(
+    word: String,
+    isSpeaking: Boolean,
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+) {
     val background by animateColorAsState(
         targetValue = if (isSpeaking) WortArtColors.Gold else Color.Transparent,
         label = "audioButtonBackground",
@@ -176,10 +184,11 @@ internal fun AudioButton(word: String, isSpeaking: Boolean, onClick: () -> Unit)
     Box(
         modifier = Modifier
             .size(52.dp)
+            .alpha(if (enabled) 1f else 0.35f)
             .clip(CircleShape)
             .background(background)
             .border(1.5.dp, WortArtColors.Gold, CircleShape)
-            .clickable(role = Role.Button, onClick = onClick)
+                        .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics { contentDescription = "Play pronunciation of $word" },
         contentAlignment = Alignment.Center,
     ) {

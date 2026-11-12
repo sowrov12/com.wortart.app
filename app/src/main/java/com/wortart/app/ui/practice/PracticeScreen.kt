@@ -310,6 +310,7 @@ private fun ColumnScope.ActiveSession(
             exampleOverride = question.exampleBlank,
             hideMeaning = question.hideMeaning,
             revealed = state.submitted,
+            speakEnabled = state.submitted || question.titleBlank == null,
             highlight = when (question.type) {
                 QuestionType.BLANK, QuestionType.PREFIX -> question.correctAnswer
                 else -> null

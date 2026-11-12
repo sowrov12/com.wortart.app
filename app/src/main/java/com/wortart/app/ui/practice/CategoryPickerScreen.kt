@@ -1,5 +1,6 @@
 package com.wortart.app.ui.practice
 
+import com.wortart.app.ui.components.AppIcon
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -125,7 +126,7 @@ private fun CategoryBox(
                 .align(Alignment.TopStart),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = emoji, fontSize = 22.sp)
+            AppIcon(name = name, emoji = emoji, size = 28.dp)
         }
         Column(modifier = Modifier.align(Alignment.BottomStart)) {
             Text(
