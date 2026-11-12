@@ -25,6 +25,7 @@ import com.wortart.app.data.settings.AppSettings
 import com.wortart.app.reminder.ReminderScheduler
 import com.wortart.app.ui.components.LocalShowBengali
 import com.wortart.app.ui.practice.CategoryPickerScreen
+import com.wortart.app.ui.members.ProfileSettings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.CompositionLocalProvider
@@ -140,6 +141,8 @@ class MainActivity : ComponentActivity() {
                 )
                 val adminViewModel: AdminViewModel =
                     viewModel(factory = AdminViewModel.factory(app.adminRepository))
+
+                LaunchedEffect(showBengali) { exploreViewModel.setIncludeBengali(showBengali) }
 
                 var route by rememberSaveable {
                     mutableIntStateOf(if (welcomeStore.hasSeenWelcome) ROUTE_MAIN else ROUTE_WELCOME)
@@ -299,6 +302,14 @@ class MainActivity : ComponentActivity() {
                                         viewModel = membersViewModel,
                                         favoritesCount = favoritesCount,
                                         voiceStatus = speechState.voiceStatus(),
+                                        settings = ProfileSettings(
+                                            reminders = remindersOn,
+                                            readFlashcards = readFlashcards,
+                                            showBengali = showBengali,
+                                            onReminders = settings::setRemindersOn,
+                                            onReadFlashcards = settings::setReadFlashcards,
+                                            onShowBengali = settings::setShowBengali,
+                                        ),
                                         onOpenAdmin = { showAdmin = true },
                                         onOpenFavorites = {
                                             exploreViewModel.showFavorites()

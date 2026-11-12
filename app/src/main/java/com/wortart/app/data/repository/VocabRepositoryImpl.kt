@@ -21,7 +21,14 @@ class VocabRepositoryImpl(
         val source = if (query.isEmpty()) {
             dao.observeFiltered(filter.level, filter.category, filter.topic, filter.favoritesOnly)
         } else {
-            dao.search(query.escapeForLike(), filter.level, filter.category, filter.topic, filter.favoritesOnly)
+            dao.search(
+                query.escapeForLike(),
+                filter.level,
+                filter.category,
+                filter.topic,
+                filter.favoritesOnly,
+                filter.includeBengali,
+            )
         }
         return source.distinctUntilChanged().flowOn(ioDispatcher)
     }

@@ -194,7 +194,7 @@ private fun BulletListView(items: List<String>) {
                 Text(text = "•", color = WortArtColors.Gold, fontSize = 15.sp)
                 Spacer(Modifier.size(8.dp))
                 Text(
-                    text = item,
+                    text = item.noBn(),
                     color = WortArtColors.TextSecondary,
                     fontSize = 15.sp,
                     lineHeight = 22.sp,
@@ -217,7 +217,7 @@ internal fun RuleTableView(table: RuleBlock.Table) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         table.title?.let { title ->
             Text(
-                text = title,
+                text = title.noBn(),
                 color = WortArtColors.TextPrimary,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -255,7 +255,7 @@ private fun RuleTableRow(cells: List<String>, cellWidth: Dp, isHeader: Boolean, 
             // Cells that start with der / die / das get the gender color.
             val genderColor = if (isHeader) null else articleOf(cell)?.let { genderColors[it] }
             Text(
-                text = cell,
+                text = cell.noBn(),
                 color = when {
                     isHeader -> WortArtColors.Gold
                     genderColor != null -> genderColor

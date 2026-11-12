@@ -41,7 +41,11 @@ data class PracticeConfig(
 )
 
 /** Number of words per category, for the category page. */
-data class GroupCounts(val total: Int = 0, val groups: List<Pair<String, Int>> = emptyList())
+data class GroupCounts(
+    val total: Int = 0,
+    val groups: List<Pair<String, Int>> = emptyList(),
+    val favorites: Int = 0,
+)
 
 /** A flashcard together with its question. */
 data class SessionCard(val card: VocabEntity, val question: ChoiceQuestion)
@@ -120,7 +124,11 @@ class PracticeViewModel(
     private fun matches(card: VocabEntity, cfg: PracticeConfig): Boolean {
         val group = cfg.group
         return (cfg.levels.isEmpty() || card.level in cfg.levels) &&
-            (group == null || group in card.groupLabels())
+            (
+                group == null ||
+                    (group == WordGroups.FAVORITES && card.isFavorite) ||
+                    group in card.groupLabels()
+                )
     }
 
     private fun buildSession(words: List<VocabEntity>, cfg: PracticeConfig): List<SessionCard> {
@@ -258,7 +266,19 @@ class PracticeViewModel(
     }
 
     fun chooseGroup(group: String?) {
-        config = config.copy(group = group)
+        val type = config.type
+        val keepType = type == null || type in PracticeSets.forGroup(group)
+        config = if (keepType) {
+            config.copy(group = group)
+        } else {
+            config.copy(group = group, type = null, mixed = true)
+        }
+        startNew()
+    }
+
+    /** Chooses the card set while practicing; null chooses "Mixed". */
+    fun chooseSetLive(type: QuestionType?) {
+        config = if (type == null) config.copy(type = null, mixed = true) else config.copy(type = type, mixed = false)
         startNew()
     }
 
@@ -274,6 +294,7 @@ class PracticeViewModel(
                 .filter { levels.isEmpty() || it.level in levels }
             groupCountsState.value = GroupCounts(
                 total = words.size,
+                favorites = words.count { it.isFavorite },
                 groups = WordGroups.ORDER
                     .map { group -> group to words.count { group in it.groupLabels() } }
                     .filter { it.second > 0 },

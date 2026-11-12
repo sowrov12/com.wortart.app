@@ -30,6 +30,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -106,6 +110,7 @@ fun PracticeRoute(
             onShowBengali = onShowBengali,
             onSkip = viewModel::skip,
             onOpenCategories = onOpenCategories,
+            onSelectSet = viewModel::chooseSetLive,
         ),
     )
 }
@@ -126,7 +131,20 @@ fun PracticeScreen(
     onOpenSetup: () -> Unit = {},
     menu: PracticeMenuConfig = PracticeMenuConfig(),
 ) {
+    var showFilter by remember { mutableStateOf(false) }
+    val openFilter = { showFilter = true }
+
     Column(modifier = modifier.fillMaxSize()) {
+        if (showFilter) {
+            PracticeFilterSheet(
+                group = state.config.group,
+                type = state.config.type,
+                levels = state.config.levels,
+                onSelectSet = menu.onSelectSet,
+                onToggleLevel = menu.onToggleLevel,
+                onDismiss = { showFilter = false },
+            )
+        }
         when (state.status) {
             PracticeStatus.LOADING, PracticeStatus.SETUP -> {
                 WortArtTopBar(title = "Flashcards", onBack = onBack, trailing = { PracticeMenu(menu) })
@@ -135,7 +153,11 @@ fun PracticeScreen(
 
             PracticeStatus.EMPTY -> {
                 WortArtTopBar(title = "Flashcards", onBack = onBack, trailing = { PracticeMenu(menu) })
-                CategoryRow(state = state, onOpenCategories = menu.onOpenCategories)
+                CategoryRow(
+                    state = state,
+                    onOpenCategories = menu.onOpenCategories,
+                    onOpenFilter = openFilter,
+                )
                 EmptyState(
                     title = "No flashcards here",
                     message = "No word matches this category and level. Change the category or the level.",
@@ -155,6 +177,7 @@ fun PracticeScreen(
                 onSubmit = onSubmit,
                 onNext = onNext,
                 menu = menu,
+                onOpenFilter = openFilter,
             )
 
             PracticeStatus.FINISHED -> SessionSummary(
@@ -171,9 +194,11 @@ fun PracticeScreen(
 private fun CategoryRow(
     state: PracticeUiState,
     onOpenCategories: () -> Unit,
+    onOpenFilter: () -> Unit,
     trailing: @Composable () -> Unit = {},
 ) {
     val shape = RoundedCornerShape(24.dp)
+    val activeFilters = state.config.levels.size + if (state.config.type != null) 1 else 0
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -183,6 +208,7 @@ private fun CategoryRow(
     ) {
         Row(
             modifier = Modifier
+                .weight(1f, fill = false)
                 .clip(shape)
                 .border(1.dp, WortArtColors.Gold.copy(alpha = 0.6f), shape)
                 .clickable(role = Role.Button, onClick = onOpenCategories)
@@ -197,12 +223,36 @@ private fun CategoryRow(
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
             )
             Icon(
                 imageVector = Icons.Filled.KeyboardArrowDown,
                 contentDescription = "Choose category",
                 tint = WortArtColors.TextPrimary,
                 modifier = Modifier.size(20.dp),
+            )
+        }
+        Row(
+            modifier = Modifier
+                .clip(shape)
+                .border(
+                    1.dp,
+                    if (activeFilters > 0) WortArtColors.Gold else WortArtColors.Gold.copy(alpha = 0.6f),
+                    shape,
+                )
+                .clickable(role = Role.Button, onClick = onOpenFilter)
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(text = "🎚", fontSize = 16.sp)
+            Text(
+                text = if (activeFilters > 0) "Filter · $activeFilters" else "Filter",
+                color = if (activeFilters > 0) WortArtColors.Gold else WortArtColors.TextPrimary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
             )
         }
         trailing()
@@ -220,6 +270,7 @@ private fun ColumnScope.ActiveSession(
     onSubmit: () -> Unit,
     onNext: () -> Unit,
     menu: PracticeMenuConfig,
+    onOpenFilter: () -> Unit,
 ) {
     val session = state.current ?: return
     val card = session.card
@@ -229,6 +280,7 @@ private fun ColumnScope.ActiveSession(
     CategoryRow(
         state = state,
         onOpenCategories = menu.onOpenCategories,
+        onOpenFilter = onOpenFilter,
         trailing = { FavoriteButton(isFavorite = card.isFavorite, onClick = onToggleFavorite) },
     )
 

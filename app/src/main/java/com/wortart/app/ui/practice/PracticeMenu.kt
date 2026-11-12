@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.unit.sp
 import com.wortart.app.data.local.entity.CefrLevels
+import com.wortart.app.domain.question.QuestionType
 import com.wortart.app.ui.theme.WortArtColors
 
 /** What the three-dot menu of the flashcards shows and does. */
@@ -37,6 +38,7 @@ data class PracticeMenuConfig(
     val onShowBengali: (Boolean) -> Unit = {},
     val onSkip: () -> Unit = {},
     val onOpenCategories: () -> Unit = {},
+    val onSelectSet: (QuestionType?) -> Unit = {},
 )
 
 private enum class MenuPage { MAIN, LEVEL, LANGUAGE }
@@ -82,7 +84,6 @@ fun PracticeMenu(config: PracticeMenuConfig) {
 
                 MenuPage.LEVEL -> {
                     BackRow("Level") { page = MenuPage.MAIN }
-                    CheckRow("All levels", config.levels.isEmpty()) { config.onClearLevels() }
                     listOf(CefrLevels.A1, CefrLevels.A2, CefrLevels.B1, CefrLevels.B2).forEach { level ->
                         CheckRow(level, level in config.levels) { config.onToggleLevel(level) }
                     }

@@ -63,12 +63,19 @@ class ExploreViewModel(private val repository: VocabRepository) : ViewModel() {
         val topic: String?,
         val favoritesOnly: Boolean,
         val query: String,
+        val includeBengali: Boolean,
     )
 
     private val level = MutableStateFlow<String?>(null)
     private val topic = MutableStateFlow<String?>(null)
     private val favoritesOnly = MutableStateFlow(false)
     private val rawQuery = MutableStateFlow("")
+    private val includeBengali = MutableStateFlow(true)
+
+    /** False keeps Bengali text out of the search (Bengali is switched off in the app). */
+    fun setIncludeBengali(value: Boolean) {
+        includeBengali.value = value
+    }
 
     /** Text of the search field, exactly as typed. */
     val query: StateFlow<String> = rawQuery.asStateFlow()
@@ -79,8 +86,8 @@ class ExploreViewModel(private val repository: VocabRepository) : ViewModel() {
         .distinctUntilChanged()
 
     val uiState: StateFlow<ExploreUiState> =
-        combine(level, topic, favoritesOnly, appliedQuery) { lvl, tpc, favs, text ->
-            Filters(lvl, tpc, favs, text)
+        combine(level, topic, favoritesOnly, appliedQuery, includeBengali) { lvl, tpc, favs, text, bn ->
+            Filters(lvl, tpc, favs, text, bn)
         }
             .flatMapLatest { filters -> stateFor(filters) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ExploreUiState())
@@ -137,6 +144,7 @@ class ExploreViewModel(private val repository: VocabRepository) : ViewModel() {
                     query = filters.query,
                     level = filters.level,
                     favoritesOnly = filters.favoritesOnly,
+                    includeBengali = filters.includeBengali,
                 ),
             ),
         ) { names, matching ->
@@ -150,6 +158,7 @@ class ExploreViewModel(private val repository: VocabRepository) : ViewModel() {
                 level = filters.level,
                 topic = filters.topic,
                 favoritesOnly = filters.favoritesOnly,
+                includeBengali = filters.includeBengali,
             ),
         )
 

@@ -93,7 +93,7 @@ abstract class VocabDao {
         SELECT * FROM vocab_table
         WHERE (word LIKE '%' || :query || '%' ESCAPE '\'
                OR translationEn LIKE '%' || :query || '%' ESCAPE '\'
-               OR translationBn LIKE '%' || :query || '%' ESCAPE '\')
+               OR (:includeBengali = 1 AND translationBn LIKE '%' || :query || '%' ESCAPE '\'))
           AND (:level IS NULL OR level = :level)
           AND (:category IS NULL OR category = :category)
           AND (:topic IS NULL OR topic = :topic OR tags LIKE '%,' || :topic || ',%')
@@ -107,6 +107,7 @@ abstract class VocabDao {
         category: String? = null,
         topic: String? = null,
         favoritesOnly: Boolean = false,
+        includeBengali: Boolean = true,
     ): Flow<List<VocabEntity>>
 
     @Query("SELECT * FROM vocab_table WHERE isFavorite = 1 ORDER BY word COLLATE NOCASE")

@@ -43,6 +43,9 @@ object WordGroups {
     const val CONJUNCTIONS = "Conjunctions"
     const val QUESTION_WORDS = "Question Words"
 
+    /** Not a real group: the words the learner marked with the heart. */
+    const val FAVORITES = "Favorites"
+
     val ORDER = listOf(
         REGULAR, IRREGULAR, MODAL, SEPARABLE, INSEPARABLE, REFLEXIVE, SEIN, DATIV_VERBS, PREP_VERBS,
         ADJECTIVES, ADVERBS,

@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wortart.app.data.local.entity.WordGroups
 import com.wortart.app.ui.components.WortArtTopBar
 import com.wortart.app.ui.explore.topicEmoji
 import com.wortart.app.ui.theme.WortArtColors
@@ -63,6 +64,15 @@ fun CategoryPickerScreen(
                     count = counts.total,
                     selected = selected == null,
                     onClick = { onSelect(null) },
+                )
+            }
+            item(key = "favorites") {
+                CategoryBox(
+                    name = "Favorites",
+                    emoji = "❤️",
+                    count = counts.favorites,
+                    selected = selected == WordGroups.FAVORITES,
+                    onClick = { onSelect(WordGroups.FAVORITES) },
                 )
             }
             items(counts.groups, key = { it.first }) { entry ->

@@ -44,6 +44,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -95,6 +97,7 @@ fun MembersRoute(
     onOpenAdmin: () -> Unit,
     onOpenFavorites: () -> Unit,
     modifier: Modifier = Modifier,
+    settings: ProfileSettings = ProfileSettings(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     // Inside the app this is the Activity, which Google's account chooser needs.
@@ -119,6 +122,7 @@ fun MembersRoute(
         onDeleteAccount = { viewModel.deleteAccount(context) },
         onOpenAdmin = onOpenAdmin,
         onOpenFavorites = onOpenFavorites,
+        settings = settings,
         onFixVoice = { openVoiceInstall(context) },
         onCopyReferralCode = { code ->
             clipboard.setText(AnnotatedString(code))
@@ -192,6 +196,7 @@ fun MembersScreen(
     onDismissMessage: () -> Unit,
     modifier: Modifier = Modifier,
     supportEmail: String = SupportConfig.EMAIL,
+    settings: ProfileSettings = ProfileSettings(),
 ) {
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
     var showAbout by rememberSaveable { mutableStateOf(false) }
@@ -253,6 +258,7 @@ fun MembersScreen(
             onContactSupport = onContactSupport,
             onAbout = { showAbout = true },
             onLogout = onSignOut,
+            settings = settings,
         )
 
         BenefitsCard()
@@ -526,6 +532,16 @@ private fun ProfileCard(state: MembersUiState) {
     }
 }
 
+/** The practice and language switches that are also shown on the profile page. */
+data class ProfileSettings(
+    val reminders: Boolean = true,
+    val readFlashcards: Boolean = true,
+    val showBengali: Boolean = true,
+    val onReminders: (Boolean) -> Unit = {},
+    val onReadFlashcards: (Boolean) -> Unit = {},
+    val onShowBengali: (Boolean) -> Unit = {},
+)
+
 @Composable
 private fun SettingsList(
     favoritesCount: Int,
@@ -538,6 +554,7 @@ private fun SettingsList(
     onContactSupport: () -> Unit,
     onAbout: () -> Unit,
     onLogout: () -> Unit,
+    settings: ProfileSettings,
 ) {
     val shape = RoundedCornerShape(24.dp)
     Column(
@@ -579,6 +596,12 @@ private fun SettingsList(
                 onClick = onFixVoice,
             )
         }
+        RowDivider()
+        SwitchRow("🔔", "Reminders", settings.reminders, settings.onReminders)
+        RowDivider()
+        SwitchRow("🎧", "Read flashcards", settings.readFlashcards, settings.onReadFlashcards)
+        RowDivider()
+        SwitchRow("🌐", "Bangla language", settings.showBengali, settings.onShowBengali)
         if (showSupport) {
             RowDivider()
             ProfileRow(emoji = "💬", title = "Support & Feedback", chevron = true, onClick = onContactSupport)
@@ -593,6 +616,36 @@ private fun SettingsList(
                 onClick = if (logoutEnabled) onLogout else null,
             )
         }
+    }
+}
+
+@Composable
+private fun SwitchRow(emoji: String, title: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Switch) { onChange(!checked) }
+            .heightIn(min = 56.dp)
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(text = emoji, fontSize = 20.sp)
+        Spacer(Modifier.size(14.dp))
+        Text(
+            text = title,
+            color = WortArtColors.TextPrimary,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f),
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = onChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = WortArtColors.OnGold,
+                checkedTrackColor = WortArtColors.Gold,
+            ),
+        )
     }
 }
 

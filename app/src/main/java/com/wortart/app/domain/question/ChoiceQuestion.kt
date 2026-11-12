@@ -37,7 +37,7 @@ object PracticeSets {
 
     /** The question types that make sense for a group (null = all groups). */
     fun forGroup(group: String?): List<QuestionType> = when (group) {
-        null -> listOf(
+        null, "Favorites" -> listOf(
             QuestionType.MEANING, QuestionType.AUXILIARY, QuestionType.BLANK,
             QuestionType.PARTIZIP, QuestionType.PREFIX, QuestionType.ANTONYM,
         )
