@@ -1,5 +1,6 @@
 package com.wortart.app
 
+import com.wortart.app.data.sheets.VocabSheetSync
 import android.app.Application
 import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
@@ -91,7 +92,10 @@ class WortArtApp : Application() {
     val localDataResetter: LocalDataResetter by lazy {
         LocalDataResetter(
             database,
-            reseed = { VocabSeeder(this, database).seedIfNeeded() },
+            reseed = {
+                VocabSheetSync(this, database).forget()
+                VocabSeeder(this, database).seedIfNeeded()
+            },
             clearLocalState = { activityLog.clear() },
         )
     }
@@ -100,6 +104,8 @@ class WortArtApp : Application() {
         super.onCreate()
         appScope.launch {
             VocabSeeder(this@WortArtApp, database).seedIfNeeded()
+            // Then follow the sheets, so a change in the sheets reaches the app.
+            VocabSheetSync(this@WortArtApp, database).sync()
         }
     }
 }

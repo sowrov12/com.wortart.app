@@ -92,7 +92,11 @@ fun PracticeRoute(
         onBack = onClose,
         onSpeak = onSpeak,
         onToggleFavorite = viewModel::toggleFavorite,
-        onSelect = viewModel::select,
+        // Tapping an option answers at once: there is no Submit button.
+        onSelect = { option ->
+            viewModel.select(option)
+            viewModel.submit()
+        },
         onSubmit = viewModel::submit,
         onNext = viewModel::next,
         onRestart = viewModel::startNew,
@@ -343,13 +347,9 @@ private fun ColumnScope.ActiveSession(
     }
 
     GoldButton(
-        text = when {
-            !state.submitted -> "Submit"
-            state.isLastCard && !state.endless -> "Finish"
-            else -> "Next"
-        },
-        enabled = state.submitted || state.selected != null,
-        onClick = if (state.submitted) onNext else onSubmit,
+        text = if (state.submitted && state.isLastCard && !state.endless) "Finish" else "Next",
+        // Before an answer, Next skips the card.
+        onClick = if (state.submitted) onNext else menu.onSkip,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp),

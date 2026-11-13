@@ -81,7 +81,9 @@ fun AnswerOptions(
         ) {
             question.options.forEach { option ->
                 RadioOption(
-                    text = option.noBn(),
+                    text = (
+                        if (question.type == QuestionType.ANTONYM && !submitted) option.substringBefore(" — ") else option
+                        ).noBn(),
                     look = lookOf(option),
                     enabled = !submitted,
                     onClick = { onSelect(option) },

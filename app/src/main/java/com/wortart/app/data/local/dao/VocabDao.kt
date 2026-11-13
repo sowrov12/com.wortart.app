@@ -44,6 +44,16 @@ abstract class VocabDao {
     @Query("DELETE FROM vocab_table")
     abstract suspend fun deleteAll()
 
+    @Query("SELECT * FROM vocab_table WHERE isFavorite = 1")
+    abstract suspend fun getFavorites(): List<VocabEntity>
+
+    /** Replaces every word with [items] in one step. */
+    @Transaction
+    open suspend fun replaceAll(items: List<VocabEntity>) {
+        deleteAll()
+        upsertAll(items)
+    }
+
     /** Replaces the whole dataset (old words that are no longer shipped disappear) and keeps favorites. */
     @Transaction
     open suspend fun replaceAllPreservingFavorites(items: List<VocabEntity>) {

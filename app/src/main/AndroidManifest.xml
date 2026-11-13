@@ -18,7 +18,7 @@
         android:roundIcon="@mipmap/wortart_logo"
         android:label="WortArt"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.Material.NoActionBar">
+        android:theme="@style/WortArtStartupTheme">
 
         <activity
             android:name=".MainActivity"

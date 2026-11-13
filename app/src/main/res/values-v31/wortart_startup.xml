@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="WortArtStartupTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/wortart_startup_bg</item>
+        <item name="android:colorBackground">@color/wortart_startup_bg</item>
+        <item name="android:windowSplashScreenBackground">@color/wortart_startup_bg</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/wortart_logo_fg</item>
+    </style>
+</resources>
