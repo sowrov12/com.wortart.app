@@ -61,6 +61,7 @@ fun CategoryPickerScreen(
             item(key = "all") {
                 CategoryBox(
                     name = "All Category",
+                    iconName = "Flashcards",
                     emoji = "🗂",
                     count = counts.total,
                     selected = selected == null,
@@ -70,6 +71,7 @@ fun CategoryPickerScreen(
             item(key = "favorites") {
                 CategoryBox(
                     name = "Favorites",
+                    iconName = "Favorite",
                     emoji = "❤️",
                     count = counts.favorites,
                     selected = selected == WordGroups.FAVORITES,
@@ -79,6 +81,7 @@ fun CategoryPickerScreen(
             items(counts.groups, key = { it.first }) { entry ->
                 CategoryBox(
                     name = entry.first,
+                    iconName = entry.first,
                     emoji = topicEmoji(entry.first),
                     count = entry.second,
                     selected = selected == entry.first,
@@ -92,6 +95,7 @@ fun CategoryPickerScreen(
 @Composable
 private fun CategoryBox(
     name: String,
+    iconName: String,
     emoji: String,
     count: Int,
     selected: Boolean,
@@ -126,7 +130,7 @@ private fun CategoryBox(
                 .align(Alignment.TopStart),
             contentAlignment = Alignment.Center,
         ) {
-            AppIcon(name = name, emoji = emoji, size = 28.dp)
+            AppIcon(name = iconName, emoji = emoji, size = 28.dp)
         }
         Column(modifier = Modifier.align(Alignment.BottomStart)) {
             Text(

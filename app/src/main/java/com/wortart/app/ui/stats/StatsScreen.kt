@@ -247,7 +247,17 @@ private fun StatTile(
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AppIcon(name = if (emoji == "⭐") "German Score" else "", emoji = emoji, size = 28.dp)
+        AppIcon(
+            name = when (emoji) {
+                "⭐" -> "German Score"
+                "🃏" -> "card"
+                "⏱️" -> "practice time"
+                "✅" -> "Correct Answer"
+                else -> ""
+            },
+            emoji = emoji,
+            size = 28.dp,
+        )
         Spacer(Modifier.size(10.dp))
         Column {
             Text(text = label, color = WortArtColors.TextSecondary, fontSize = 12.sp)
@@ -399,7 +409,9 @@ private fun AchievementChip(achievement: Achievement) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Text(text = if (achievement.earned) achievement.emoji else "🔒", fontSize = 24.sp)
+        AppIcon(name = achievement.title, size = 30.dp) {
+            Text(text = if (achievement.earned) achievement.emoji else "🔒", fontSize = 24.sp)
+        }
         Text(
             text = achievement.title,
             color = if (achievement.earned) WortArtColors.Gold else WortArtColors.TextSecondary,

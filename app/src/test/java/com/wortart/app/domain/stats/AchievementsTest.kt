@@ -13,7 +13,7 @@ class AchievementsTest {
     @Test
     fun aNewLearnerHasEarnedNothing() {
         assertTrue(earned(StatsSummary()).isEmpty())
-        assertEquals(5, Achievements.from(StatsSummary()).size)
+        assertEquals(12, Achievements.from(StatsSummary()).size)
     }
 
     @Test

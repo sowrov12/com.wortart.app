@@ -198,7 +198,7 @@ private fun QuickTile(emoji: String, label: String, onClick: () -> Unit, modifie
                 .background(WortArtColors.Gold.copy(alpha = 0.14f), CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = emoji, fontSize = 22.sp)
+            AppIcon(name = label, emoji = emoji, size = 30.dp)
         }
         Text(
             text = label,

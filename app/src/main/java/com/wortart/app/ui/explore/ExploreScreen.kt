@@ -213,11 +213,7 @@ private fun SearchRow(
             singleLine = true,
             shape = RoundedCornerShape(16.dp),
             placeholder = { Text(text = "Search words…", color = WortArtColors.TextMuted) },
-            leadingIcon = {
-                AppIcon(name = "Search", size = 22.dp) {
-                    Icon(imageVector = Icons.Filled.Search, contentDescription = null)
-                }
-            },
+            leadingIcon = { Icon(imageVector = Icons.Filled.Search, contentDescription = null) },
             trailingIcon = {
                 if (query.isNotEmpty()) {
                     IconButton(onClick = { onQueryChange("") }) {

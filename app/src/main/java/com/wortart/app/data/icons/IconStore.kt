@@ -76,19 +76,28 @@ class IconStore(context: Context) {
     }
 
     private fun download(id: String, target: File): Boolean {
-        val bytes = httpGet("https://drive.google.com/uc?export=download&id=$id") ?: return false
-        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
-        if (bounds.outWidth <= 0) return false // not an image (for example a Drive error page)
-        val temp = File(dir, "${target.name}.tmp")
-        temp.writeBytes(bytes)
-        return temp.renameTo(target)
+        val sources = listOf(
+            "https://drive.google.com/uc?export=download&id=$id",
+            // A resized copy: smaller and quicker, also works for formats the phone cannot decode.
+            "https://drive.google.com/thumbnail?id=$id&sz=w512",
+        )
+        for (source in sources) {
+            val bytes = httpGet(source) ?: continue
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+            if (bounds.outWidth <= 0) continue // not an image (for example a Drive error page)
+            val temp = File(dir, "${target.name}.tmp")
+            temp.writeBytes(bytes)
+            return temp.renameTo(target)
+        }
+        return false
     }
 
     private fun httpGet(address: String): ByteArray? = runCatching {
         val connection = URL(address).openConnection() as HttpURLConnection
-        connection.connectTimeout = 10_000
-        connection.readTimeout = 20_000
+        connection.connectTimeout = 15_000
+        connection.readTimeout = 45_000
+        connection.setRequestProperty("User-Agent", "Mozilla/5.0")
         connection.instanceFollowRedirects = true
         try {
             if (connection.responseCode == 200) connection.inputStream.use { it.readBytes() } else null
@@ -119,14 +128,37 @@ class IconStore(context: Context) {
         Regex("/d/([A-Za-z0-9_-]+)").find(link)?.groupValues?.get(1)
             ?: Regex("[?&]id=([A-Za-z0-9_-]+)").find(link)?.groupValues?.get(1)
 
-    private fun parseCsv(text: String): List<Pair<String, String>> =
-        text.lines().mapNotNull { line ->
-            val comma = line.indexOf(',')
-            if (comma <= 0) return@mapNotNull null
-            val name = line.substring(0, comma).trim().trim('"')
-            val link = line.substring(comma + 1).trim().trim('"')
-            if (name.isNotEmpty() && link.startsWith("http")) name to link else null
+    /** Every "name, link" pair in a row: the sheet has several name and link column pairs side by side. */
+    private fun parseCsv(text: String): List<Pair<String, String>> {
+        val pairs = ArrayList<Pair<String, String>>()
+        text.lines().forEach { line ->
+            val cells = splitCsvLine(line)
+            for (i in 0 until cells.size - 1) {
+                val name = cells[i].trim()
+                val link = cells[i + 1].trim()
+                if (name.isNotEmpty() && !name.startsWith("http") && link.startsWith("http")) pairs += name to link
+            }
         }
+        return pairs
+    }
+
+    private fun splitCsvLine(line: String): List<String> {
+        val cells = ArrayList<String>()
+        val current = StringBuilder()
+        var quoted = false
+        for (ch in line) {
+            when {
+                ch == '"' -> quoted = !quoted
+                ch == ',' && !quoted -> {
+                    cells += current.toString()
+                    current.clear()
+                }
+                else -> current.append(ch)
+            }
+        }
+        cells += current.toString()
+        return cells
+    }
 
     private fun parseXlsx(bytes: ByteArray): List<Pair<String, String>> {
         var shared = emptyList<String>()
@@ -146,8 +178,7 @@ class IconStore(context: Context) {
         val rows = ArrayList<Pair<String, String>>()
         val parser = Xml.newPullParser()
         parser.setInput(ByteArrayInputStream(data), "UTF-8")
-        var a = ""
-        var b = ""
+        val cells = HashMap<String, String>()
         var column = ""
         var type = ""
         var inValue = false
@@ -155,7 +186,7 @@ class IconStore(context: Context) {
         while (event != XmlPullParser.END_DOCUMENT) {
             when (event) {
                 XmlPullParser.START_TAG -> when (parser.name) {
-                    "row" -> { a = ""; b = "" }
+                    "row" -> cells.clear()
                     "c" -> {
                         column = (parser.getAttributeValue(null, "r") ?: "").takeWhile { it.isLetter() }
                         type = parser.getAttributeValue(null, "t") ?: ""
@@ -165,12 +196,16 @@ class IconStore(context: Context) {
                 XmlPullParser.TEXT -> if (inValue) {
                     val raw = parser.text.trim()
                     val value = if (type == "s") shared.getOrNull(raw.toIntOrNull() ?: -1).orEmpty() else raw
-                    if (column == "A") a = value
-                    if (column == "B") b = value
+                    cells[column] = value
                 }
                 XmlPullParser.END_TAG -> when (parser.name) {
                     "v", "t" -> inValue = false
-                    "row" -> if (a.isNotEmpty() && b.startsWith("http")) rows += a to b
+                    "row" -> for ((col, value) in cells) {
+                        if (value.startsWith("http") && col.length == 1 && col[0] > 'A') {
+                            val name = cells[(col[0] - 1).toString()].orEmpty().trim()
+                            if (name.isNotEmpty() && !name.startsWith("http")) rows += name to value
+                        }
+                    }
                 }
             }
             event = parser.next()

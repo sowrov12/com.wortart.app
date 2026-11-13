@@ -1,5 +1,6 @@
 package com.wortart.app.ui.rules
 
+import com.wortart.app.ui.components.AppIcon
 import com.wortart.app.ui.components.LocalShowBengali
 import com.wortart.app.ui.components.noBn
 import androidx.compose.animation.AnimatedVisibility
@@ -194,7 +195,11 @@ private fun LessonCard(
                     .background(WortArtColors.Gold.copy(alpha = 0.14f), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = lessonEmoji(lesson.icon), fontSize = 22.sp)
+                AppIcon(
+                    name = lesson.title.de.substringBefore(':'),
+                    emoji = lessonEmoji(lesson.icon),
+                    size = 28.dp,
+                )
             }
             Spacer(Modifier.size(14.dp))
             Column(modifier = Modifier.weight(1f)) {

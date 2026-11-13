@@ -14,6 +14,8 @@
     <application
         android:name=".WortArtApp"
         android:allowBackup="true"
+        android:icon="@mipmap/wortart_logo"
+        android:roundIcon="@mipmap/wortart_logo"
         android:label="WortArt"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.NoActionBar">
